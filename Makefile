@@ -3,7 +3,7 @@ CFLAGS=-Wall -Wno-unused-result -g -Og
 
 EXECUTABLE=compiler
 
-all: compile run clean
+all: compile
 
 clean:
 	@rm -f $(EXECUTABLE)
