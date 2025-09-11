@@ -27,11 +27,6 @@ typedef struct
     int line;
 } Token;
 
-const char *keywords[] = {
-    "program", "begin", "end", "procedure", "if", "then", "else", "while", "do",
-    "and", "or", "not", "var", "integer", "boolean", "true", "false", "write", "div"};
-const int num_keywords = sizeof(keywords) / sizeof(keywords[0]);
-
 Token *create_token(TokenType type, const char *start, const char *end, int line)
 {
     Token *token = (Token *)malloc(sizeof(Token));
@@ -44,6 +39,11 @@ Token *create_token(TokenType type, const char *start, const char *end, int line
     token->line = line;
     return token;
 }
+
+const char *keywords[] = {
+    "program", "begin", "end", "procedure", "if", "then", "else", "while", "do",
+    "and", "or", "not", "var", "integer", "boolean", "true", "false", "write", "div"};
+const int num_keywords = sizeof(keywords) / sizeof(keywords[0]);
 
 // <letra> ::= _ | a | ... | z | A | ... | Z
 Token *recognize_letter(const char **input, int line)
