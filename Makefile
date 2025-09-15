@@ -1,17 +1,21 @@
-CC=gcc
-CFLAGS=-Wall -Wno-unused-result -g -Og
+INCLUDE_DIR="./include"
+SRC_DIR="./src"
 
-EXECUTABLE=compiler
+CC=gcc
+CFLAGS=-Wall -Wno-unused-result -g -Og -I$(INCLUDE_DIR)
+
+SRC_FILES=$(shell find $(SRC_DIR) -name "*.c")
+OUTPUT=compiler
 
 all: compile
 
 clean:
-	@rm -f $(EXECUTABLE)
+	@rm -f $(OUTPUT)
 
-compile: compiler.c
-	@$(CC) $(CFLAGS) -o $(EXECUTABLE) compiler.c
+compile: $(SRC_FILES)
+	@$(CC) $(CFLAGS) -o $(OUTPUT) $(SRC_FILES)
 
 run: compile
-	@./$(EXECUTABLE)
+	@./$(OUTPUT)
 
 # "@" before a command suppresses the command output
