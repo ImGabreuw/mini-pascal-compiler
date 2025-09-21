@@ -2,6 +2,7 @@
 #include <stdlib.h>
 
 #include "scanner.h"
+#include "logging.h"
 
 /*
 Referências:
@@ -16,16 +17,20 @@ int main(int argc, char const *argv[])
         exit(EXIT_FAILURE);
     }
 
+    const char *program_name = argv[0];
+
+    log_init(program_name);
     scanner_init(argv[1]);
-    
+
     Token *token;
     while ((token = get_token()) != NULL)
     {
-        printf("Token: Type=%s, Value='%s', Line=%d\n", token_type_to_string(token->type), token->value, token->line);
+        log_token(token);
         free(token);
     }
-    
+
     scanner_cleanup();
+    log_cleanup();
 
     return EXIT_SUCCESS;
 }
