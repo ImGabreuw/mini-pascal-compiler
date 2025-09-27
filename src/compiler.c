@@ -22,9 +22,11 @@ int main(int argc, char const *argv[])
 
     log_init(program_name);
     scanner_init(argv[1]);
+    parser_init();
 
     parser_parse();
 
+    parser_cleanup();
     scanner_cleanup();
     log_cleanup();
 

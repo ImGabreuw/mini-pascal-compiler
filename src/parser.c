@@ -8,61 +8,85 @@
 #include "scanner.h"
 #include "logging.h"
 
-void match(Token *current_token, TokenType expected_type, const char *expected_value)
+static Token *current_token = NULL;
+
+/**
+ * @brief Libera o espaço alocado para o token atual e obtém o próximo token do analisador léxico.
+ */
+static void token_advance()
+{
+    if (current_token)
+    {
+        free(current_token);
+    }
+    current_token = get_token();
+}
+
+/**
+ * @brief Verifica se o token atual corresponde ao tipo e valor esperados.
+ */
+static bool token_check(TokenType type, const char *value)
 {
     if (current_token == NULL)
+        return false;
+
+    if (current_token->type != type)
+        return false;
+
+    return value == NULL || strcmp(current_token->value, value) == 0;
+}
+
+/**
+ * @brief Consome o token atual se ele corresponder ao tipo e valor esperados.
+ */
+static bool token_match(TokenType type, const char *value)
+{
+    if (token_check(type, value))
+    {
+        token_advance();
+        return true;
+    }
+    return false;
+}
+
+/**
+ * @brief Verifica se o token atual corresponde ao tipo e valor esperados.
+ *        Se corresponder, avança para o próximo token.
+ *        Caso contrário, registra um erro de sintaxe e termina o programa.
+ */
+static void token_expect(TokenType type, const char *value)
+{
+    if (!token_check(type, value))
     {
         log_syntax_error(current_token);
         exit(EXIT_FAILURE);
     }
 
-    bool type_mismatch = current_token->type != expected_type;
-    bool value_mismatch = expected_value != NULL && strcmp(current_token->value, expected_value) != 0;
-
-    if (type_mismatch || value_mismatch)
-    {
-        log_syntax_error(current_token);
-        exit(EXIT_FAILURE);
-    }
-
-    free(current_token);
+    token_advance();
 }
 
 // <type> ::= integer | boolean
 void parser_parse_type()
 {
-    Token *current_token = get_token();
-
-    bool type_mismatch = current_token->type != TOKEN_KEYWORD;
-    bool value_mismatch = strcmp(current_token->value, "integer") != 0 && strcmp(current_token->value, "boolean") != 0;
-
-    if (type_mismatch || value_mismatch)
+    if (!token_check(TOKEN_KEYWORD, "integer") && !token_check(TOKEN_KEYWORD, "boolean"))
     {
         log_syntax_error(current_token);
         exit(EXIT_FAILURE);
     }
-
-    free(current_token);
+    token_advance();
 }
 
 // <variable declaration> ::= <identifier > { , <identifier> } : <type>
 void parser_parse_variable_declaration()
 {
-    Token *current_token = get_token();
-    match(current_token, TOKEN_IDENTIFIER, NULL);
+    token_expect(TOKEN_IDENTIFIER, NULL);
 
-    current_token = get_token();
-    while (current_token->type == TOKEN_DELIMITER && strcmp(current_token->value, ",") == 0)
+    while (token_match(TOKEN_DELIMITER, ","))
     {
-        match(current_token, TOKEN_DELIMITER, ",");
-
-        current_token = get_token();
-        match(current_token, TOKEN_IDENTIFIER, NULL);
-
-        current_token = get_token();
+        token_expect(TOKEN_IDENTIFIER, NULL);
     }
 
-    match(current_token, TOKEN_DELIMITER, ":");
+    token_expect(TOKEN_DELIMITER, ":");
 
     parser_parse_type();
 }
@@ -70,32 +94,34 @@ void parser_parse_variable_declaration()
 // <variable declaration part> ::= <empty> | var <variable declaration> ; { <variable declaration part> ; }
 void parser_parse_variable_declaration_part()
 {
-    Token *current_token = get_token();
-
-    if (current_token == NULL)
+    if (token_match(TOKEN_KEYWORD, "var"))
     {
-        return; // End of input, empty production
-    }
-
-    if (current_token->type == TOKEN_KEYWORD && strcmp(current_token->value, "var") == 0)
-    {
-        match(current_token, TOKEN_KEYWORD, "var");
-
         parser_parse_variable_declaration();
+        token_expect(TOKEN_DELIMITER, ";");
 
-        current_token = get_token();
-        match(current_token, TOKEN_DELIMITER, ";");
+        while (token_match(TOKEN_KEYWORD, "var"))
+        {
+            parser_parse_variable_declaration();
+            token_expect(TOKEN_DELIMITER, ";");
+        }
+    }
+}
 
-        parser_parse_variable_declaration_part();
-    }
-    else
-    {
-        // Produção vazia
-        free(current_token);
-    }
+void parser_init()
+{
+    token_advance(); // Inicializa o primeiro token
 }
 
 void parser_parse()
 {
     parser_parse_variable_declaration_part();
+}
+
+void parser_cleanup()
+{
+    if (current_token)
+    {
+        free(current_token);
+        current_token = NULL;
+    }
 }
