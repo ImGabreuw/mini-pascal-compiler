@@ -123,22 +123,7 @@ void parser_parse_sign()
 // <relational operator> ::= = | <> | < | <= | >= | > | or | and
 void parser_parse_relational_operator()
 {
-    if (token_match(TOKEN_OPERATOR_RELATIONAL, "="))
-        return;
-
-    if (token_match(TOKEN_OPERATOR_RELATIONAL, "<>"))
-        return;
-
-    if (token_match(TOKEN_OPERATOR_RELATIONAL, "<"))
-        return;
-
-    if (token_match(TOKEN_OPERATOR_RELATIONAL, "<="))
-        return;
-
-    if (token_match(TOKEN_OPERATOR_RELATIONAL, ">="))
-        return;
-
-    if (token_match(TOKEN_OPERATOR_RELATIONAL, ">"))
+    if (token_match(TOKEN_OPERATOR_RELATIONAL, NULL))
         return;
 
     if (token_match(TOKEN_KEYWORD, "or"))
@@ -151,14 +136,7 @@ void parser_parse_relational_operator()
     exit(EXIT_FAILURE);
 }
 
-/*
-<factor> ::=
-<variable>
-| <constant>
-| ( <expression> )
-| not <factor>
-| bool
-*/
+// <factor> ::= <variable> | <constant> | ( <expression> ) | not <factor> | bool
 void parser_parse_factor()
 {
     if (token_match(TOKEN_DELIMITER, "("))
