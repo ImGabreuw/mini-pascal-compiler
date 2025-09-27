@@ -7,6 +7,7 @@
 #include <stdbool.h>
 
 #include "token.h"
+#include "logging.h"
 
 static FILE *source_file;
 static int current_line = 1;
@@ -317,7 +318,12 @@ Token *get_token()
     {
         buffer[last_match_length] = '\0';
         Token *token = create_token(last_match_type, buffer, buffer + last_match_length, current_line);
-        symbol_table[symbol_count++] = *token;
+        log_token(token);
+
+        if (token->type == TOKEN_IDENTIFIER) {
+            symbol_table[symbol_count++] = *token;
+        }
+
         return token;
     }
 
@@ -333,6 +339,7 @@ Token *get_token()
     buffer[1] = '\0';
 
     Token *token = create_token(TOKEN_IDENTIFIER, buffer, buffer + 1, current_line);
+    log_token(token);
     symbol_table[symbol_count++] = *token;
     return token;
 }

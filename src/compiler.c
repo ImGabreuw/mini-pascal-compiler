@@ -22,17 +22,9 @@ int main(int argc, char const *argv[])
 
     log_init(program_name);
     scanner_init(argv[1]);
-    Parser *parser = parser_init(); 
 
-    Token *token;
-    while ((token = get_token()) != NULL)
-    {
-        log_token(token);
-        parser_parse(parser);
-        free(token);
-    }
+    parser_parse();
 
-    parser_cleanup(parser);
     scanner_cleanup();
     log_cleanup();
 

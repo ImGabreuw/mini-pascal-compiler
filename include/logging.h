@@ -12,6 +12,8 @@ void log_init(const char *program_name);
 
 void log_token(const Token *token);
 
+void log_syntax_error(const Token *token);
+
 void log_cleanup();
 
 #endif
