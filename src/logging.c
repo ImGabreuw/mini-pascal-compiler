@@ -50,7 +50,6 @@ void log_syntax_error(const Token *token)
         }
 
         printf("%s", log_line);
-        fprintf(token_file, "%s", log_line);
     }
 }
 
