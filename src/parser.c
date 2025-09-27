@@ -107,6 +107,221 @@ void parser_parse_variable_declaration_part()
     }
 }
 
+#include "parser.h"
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdbool.h>
+#include <string.h>
+
+#include "scanner.h"
+#include "logging.h"
+
+void match(Token *current_token, TokenType expected_type, const char *expected_value)
+{
+    if (current_token == NULL)
+    {
+        log_syntax_error(current_token);
+        exit(EXIT_FAILURE);
+    }
+
+    bool type_mismatch = current_token->type != expected_type;
+    bool value_mismatch = expected_value != NULL && strcmp(current_token->value, expected_value) != 0;
+
+    if (type_mismatch || value_mismatch)
+    {
+        log_syntax_error(current_token);
+        exit(EXIT_FAILURE);
+    }
+
+    free(current_token);
+}
+
+// <type> ::= integer | boolean
+void parser_parse_type()
+{
+    Token *current_token = get_token();
+
+    bool type_mismatch = current_token->type != TOKEN_KEYWORD;
+    bool value_mismatch = strcmp(current_token->value, "integer") != 0 && strcmp(current_token->value, "boolean") != 0;
+
+    if (type_mismatch || value_mismatch)
+    {
+        log_syntax_error(current_token);
+        exit(EXIT_FAILURE);
+    }
+
+    free(current_token);
+}
+
+// <variable declaration> ::= <identifier > { , <identifier> } : <type>
+void parser_parse_variable_declaration()
+{
+    Token *current_token = get_token();
+    match(current_token, TOKEN_IDENTIFIER, NULL);
+
+    current_token = get_token();
+    while (current_token->type == TOKEN_DELIMITER && strcmp(current_token->value, ",") == 0)
+    {
+        match(current_token, TOKEN_DELIMITER, ",");
+
+        current_token = get_token();
+        match(current_token, TOKEN_IDENTIFIER, NULL);
+
+        current_token = get_token();
+    }
+
+    match(current_token, TOKEN_DELIMITER, ":");
+
+    parser_parse_type();
+}
+
+// <variable declaration part> ::= <empty> | var <variable declaration> ; { <variable declaration part> ; }
+void parser_parse_variable_declaration_part()
+{
+    Token *current_token = get_token();
+
+    if (current_token == NULL)
+    {
+        return; // End of input, empty production
+    }
+
+    if (current_token->type == TOKEN_KEYWORD && strcmp(current_token->value, "var") == 0)
+    {
+        match(current_token, TOKEN_KEYWORD, "var");
+
+        parser_parse_variable_declaration();
+
+        current_token = get_token();
+        match(current_token, TOKEN_DELIMITER, ";");
+
+        parser_parse_variable_declaration_part();
+    }
+    else
+    {
+        // Produção vazia
+        free(current_token);
+    }
+}
+
+/*
+<statement part> ::=
+begin <statement>{ ; <statement> } end
+*/
+void parser_parse_statement_part(){
+    Token* current_token = get_token();
+    match(current_token,TOKEN_KEYWORD,"begin");
+    
+    parser_parse_statement();
+
+    current_token = get_token();
+    while(current_token->type == TOKEN_DELIMITER && strcmp(current_token->value,";")){
+        parser_parse_statement();
+        
+        current_token = get_token();
+
+    }
+
+    current_token = get_token();
+    match(current_token,TOKEN_KEYWORD,"end");
+}
+
+/*
+<function declaration> ::=
+function < identifier > < formal parameters (variable declaration part) > : < type >; < block >
+*/
+void parser_parse_function_declaration(){
+    parser_parse_identifier();
+
+    parser_parse_variable_declaration_part();
+
+    Token* current_token = get_token();
+    match(current_token, TOKEN_DELIMITER, ":");
+    
+    parser_parse_type();
+    
+    Token* current_token = get_token();
+    match(current_token, TOKEN_DELIMITER, ";");
+    
+    parser_parse_block();
+}
+
+/*
+<procedure declaration> ::=
+procedure < identifier > < formal parameters (variable declaration part) > ; <block>
+*/
+void parser_parse_procedure_declaration(){
+    parser_parse_identifier();
+
+    parser_parse_variable_declaration_part();
+
+    Token* current_token = get_token();
+    match(current_token, TOKEN_DELIMITER, ";");
+
+    parser_parse_block();
+}
+
+/*
+<subroutine declaration part> ::=
+< procedure declaration | function declaration >
+*/
+void parser_parse_subroutine_declaration_part(){
+   Token* current_token = get_token();
+   
+   // <procedure declaration>
+   if(current_token->type == TOKEN_KEYWORD && strcmp(current_token->value,"procedure")){
+    parser_parse_procedure_declaration();
+   }
+   else{ //<function declaration>
+    parser_parse_function_declaration();
+   }
+}
+
+
+/*
+<block> ::=
+<variable declaration part>
+<subroutine declaration part>
+<statement part>
+*/
+void parser_parse_block(){
+    parser_parse_variable_declaration_part();
+
+    parser_parse_subroutine_declaration_part();
+
+    parser_parse_statement_part();
+}
+
+//<program> ::= program <identifier> ; <block> .
+void parser_parse_program(){
+    
+    //program
+    Token* current_token = get_token();
+    match(current_token,TOKEN_KEYWORD,"program");
+    
+    //<identifier>
+    parser_parse_identifier();
+    
+    //;
+    Token* current_token = get_token();
+    match(current_token,TOKEN_DELIMITER,";");
+    
+    //<block>
+    parser_parse_block();
+    
+    //.
+    Token* current_token = get_token();
+    match(current_token,TOKEN_DELIMITER,".");
+
+    free(current_token);
+
+}
+
+void parser_parse()
+{
+    parser_parse_variable_declaration_part();
+}
+
 void parser_init()
 {
     token_advance(); // Inicializa o primeiro token
