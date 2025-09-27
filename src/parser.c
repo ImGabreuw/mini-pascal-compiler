@@ -246,8 +246,164 @@ void parser_parse_variable_declaration_part()
     }
 }
 
-// <statement part> ::= begin <statement> { ; <statement> } end
-void parser_parse_statement_part()
+/*
+<while statement> ::=
+while <expression> do <statement>
+*/
+void parser_parse_while_statement(){
+    token_expect(TOKEN_KEYWORD,"while");
+    
+    parser_parse_expression();
+    
+    token_expect(TOKEN_KEYWORD,"do");
+
+    parser_parse_statement();
+}
+
+/*
+<if statement> ::=
+if <expression> then <statement> { else <statement> }
+*/
+void parser_parse_if_statement(){
+    token_expect(TOKEN_KEYWORD,"if");
+    
+    parser_parse_expression();
+    
+    token_expect(TOKEN_KEYWORD,"then");
+
+    parser_parse_statement();
+
+    if(token_match(TOKEN_KEYWORD,"else")){
+        parser_parse_statement();
+    }
+
+}
+
+/*
+<read statement> ::=
+read ( <variable> { , <variable> } )
+
+<write statement> ::=
+write ( <variable> { , <variable> } )
+*/
+void parser_parse_read_write_statement(){
+    token_match(TOKEN_KEYWORD,"write") || token_match(TOKEN_KEYWORD,"read");
+
+    token_expect(TOKEN_DELIMITER,"(");
+
+    token_expect(TOKEN_IDENTIFIER,NULL); //variable
+    
+    while(token_match(TOKEN_DELIMITER,",")){
+        
+        token_expect(TOKEN_IDENTIFIER,NULL); //variable
+        
+    }
+
+    token_expect(TOKEN_DELIMITER,")");
+}
+
+/*
+<parameters list> ::=
+( <identifier> | <number> | <bool> )
+{, ( <identifier> | <numero> | <bool> ) }
+*/
+void parser_parse_parameters_list(){
+    token_expect(TOKEN_DELIMITER,"(");
+
+    //Tentar casar com ID,number e bool
+    token_match(TOKEN_IDENTIFIER,NULL) || token_match(TOKEN_NUMBER,NULL) || token_match(TOKEN_BOOLEAN,NULL);
+
+    token_expect(TOKEN_DELIMITER,")");
+    
+    //Repete 0 ou mais vezes
+    while(token_match(TOKEN_DELIMITER,",")){
+        token_expect(TOKEN_DELIMITER,"(");
+    
+        token_match(TOKEN_IDENTIFIER,NULL) || token_match(TOKEN_NUMBER,NULL) || token_match(TOKEN_BOOLEAN,NULL);
+    
+        token_expect(TOKEN_DELIMITER,")");
+
+    }
+
+    
+}
+
+/*
+<function_procedure statement> ::=
+<function_procedure identifier> ( <parameters list> ) | <variable> := <function_procedure identifier> ( <parameters list>)
+*/
+void parser_parse_function_procedure_statement(){
+    token_expect(TOKEN_IDENTIFIER,NULL); //equivalente a function_procedure identifier ou variable
+
+    if(token_match(TOKEN_OPERATOR_ASSIGNMENT,":=")){
+
+        token_expect(TOKEN_IDENTIFIER,NULL); // function_procedure identifier
+        
+    }
+        
+    token_expect(TOKEN_DELIMITER,"(");
+    
+    parser_parse_parameter_list();
+    
+    token_expect(TOKEN_DELIMITER,")");
+}
+
+/*
+<assignment statement> ::=
+<variable> := <expression>
+*/
+void parser_parse_assignment_statement()
+{
+    token_expect(TOKEN_IDENTIFIER,NULL);
+
+    token_expect(TOKEN_OPERATOR_ASSIGNMENT, ":=");
+
+    parser_parse_expression();
+}
+
+/*
+<statement> ::=
+<assignment statement>
+| <function_procedure statement>
+| <read statement>
+| <write statement>
+| <compound statement>
+| <if statement>
+| <while statement>
+*/
+void parser_parse_statement(){
+
+    if(token_check(TOKEN_KEYWORD,"read") || token_check(TOKEN_KEYWORD,"write")){
+        parser_parse_read_write_statement();
+        return;
+    }
+
+    if(token_check(TOKEN_KEYWORD,"if")){
+        parser_parse_if_statement();
+        return;
+    }
+
+    if(token_check(TOKEN_KEYWORD, "begin")){
+        parser_parse_compound_statement();
+        return;
+    }
+
+    if(token_check(TOKEN_KEYWORD,"while")){
+        parser_parse_while_statement();
+        return;
+
+    }
+
+    if(token_check(TOKEN_IDENTIFIER,NULL)){
+        //TODO Definir como escolher um desses
+        //parser_parse_assignment_statement
+        //parser_parse_function_procedure_statement()
+    }
+
+}
+
+// <compound_statement> ::= begin <statement> { ; <statement> } end
+void parser_parse_compound_statement()
 {
     token_expect(TOKEN_KEYWORD, "begin");
     parser_parse_statement();
