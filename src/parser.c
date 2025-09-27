@@ -65,6 +65,167 @@ static void token_expect(TokenType type, const char *value)
     token_advance();
 }
 
+// <constant> ::= <integer constant> | <constant identifier>
+void parser_parse_constant()
+{
+    if (token_match(TOKEN_NUMBER, NULL))
+        return;
+
+    if (token_match(TOKEN_IDENTIFIER, NULL))
+        return;
+
+    log_syntax_error(current_token);
+    exit(EXIT_FAILURE);
+}
+
+// <variable> ::= <identifier>
+void parser_parse_variable()
+{
+    token_expect(TOKEN_IDENTIFIER, NULL);
+}
+
+// <multiplying operator> ::= * | div
+void parser_parse_multiplying_operator()
+{
+    if (token_match(TOKEN_OPERATOR_ARITHMETIC, "*"))
+        return;
+
+    if (token_match(TOKEN_KEYWORD, "div"))
+        return;
+
+    log_syntax_error(current_token);
+    exit(EXIT_FAILURE);
+}
+
+// <adding operator> ::= + | -
+void parser_parse_adding_operator()
+{
+    if (token_match(TOKEN_OPERATOR_ARITHMETIC, "+"))
+        return;
+
+    if (token_match(TOKEN_OPERATOR_ARITHMETIC, "-"))
+        return;
+
+    log_syntax_error(current_token);
+    exit(EXIT_FAILURE);
+}
+
+// <sign> ::= + | - | <empty>
+void parser_parse_sign()
+{
+    if (token_match(TOKEN_OPERATOR_ARITHMETIC, "+"))
+        return;
+
+    if (token_match(TOKEN_OPERATOR_ARITHMETIC, "-"))
+        return;
+}
+
+// <relational operator> ::= = | <> | < | <= | >= | > | or | and
+void parser_parse_relational_operator()
+{
+    if (token_match(TOKEN_OPERATOR_RELATIONAL, "="))
+        return;
+
+    if (token_match(TOKEN_OPERATOR_RELATIONAL, "<>"))
+        return;
+
+    if (token_match(TOKEN_OPERATOR_RELATIONAL, "<"))
+        return;
+
+    if (token_match(TOKEN_OPERATOR_RELATIONAL, "<="))
+        return;
+
+    if (token_match(TOKEN_OPERATOR_RELATIONAL, ">="))
+        return;
+
+    if (token_match(TOKEN_OPERATOR_RELATIONAL, ">"))
+        return;
+
+    if (token_match(TOKEN_KEYWORD, "or"))
+        return;
+
+    if (token_match(TOKEN_KEYWORD, "and"))
+        return;
+
+    log_syntax_error(current_token);
+    exit(EXIT_FAILURE);
+}
+
+/*
+<factor> ::=
+<variable>
+| <constant>
+| ( <expression> )
+| not <factor>
+| bool
+*/
+void parser_parse_factor()
+{
+    if (token_match(TOKEN_DELIMITER, "("))
+    {
+        parser_parse_expression();
+        token_expect(TOKEN_DELIMITER, ")");
+        return;
+    }
+
+    if (token_match(TOKEN_KEYWORD, "not"))
+    {
+        parser_parse_factor();
+        return;
+    }
+
+    if (token_check(TOKEN_BOOLEAN, NULL))
+    {
+        token_advance();
+        return;
+    }
+
+    if (token_check(TOKEN_IDENTIFIER, NULL))
+    {
+        parser_parse_variable();
+        return;
+    }
+
+    parser_parse_constant();
+}
+
+// <term> ::= <factor> { <multiplying operator> <factor> }
+void parser_parse_term()
+{
+    parser_parse_factor();
+
+    while (token_check(TOKEN_OPERATOR_ARITHMETIC, "*") || token_check(TOKEN_KEYWORD, "div"))
+    {
+        parser_parse_multiplying_operator();
+        parser_parse_factor();
+    }
+}
+
+// <simple expression> ::= <sign> <term> { <adding operator> <term> }
+void parser_parse_simple_expression()
+{
+    parser_parse_sign();
+    parser_parse_term();
+
+    while (token_check(TOKEN_OPERATOR_ARITHMETIC, "+") || token_check(TOKEN_OPERATOR_ARITHMETIC, "-"))
+    {
+        parser_parse_adding_operator();
+        parser_parse_term();
+    }
+}
+
+// <expression> ::= <simple expression> | <simple expression> <relational operator> <simple expression>
+void parser_parse_expression()
+{
+    parser_parse_simple_expression();
+
+    if (token_check(TOKEN_OPERATOR_RELATIONAL, NULL))
+    {
+        parser_parse_relational_operator();
+        parser_parse_simple_expression();
+    }
+}
+
 // <type> ::= integer | boolean
 void parser_parse_type()
 {
