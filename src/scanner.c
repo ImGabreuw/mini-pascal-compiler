@@ -11,6 +11,9 @@
 static FILE *source_file;
 static int current_line = 1;
 
+Token symbol_table[MAX_SYMBOLS];
+int symbol_count = 0;
+
 static bool is_letter(const char ch)
 {
     return isalpha(ch) || ch == '_';
@@ -313,7 +316,9 @@ Token *get_token()
     if (last_match_length > 0)
     {
         buffer[last_match_length] = '\0';
-        return create_token(last_match_type, buffer, buffer + last_match_length, current_line);
+        Token *token = create_token(last_match_type, buffer, buffer + last_match_length, current_line);
+        symbol_table[symbol_count++] = *token;
+        return token;
     }
 
     // Se o caractere atual for EOF (acabou o arquivo)
@@ -327,7 +332,9 @@ Token *get_token()
     buffer[0] = ch;
     buffer[1] = '\0';
 
-    return create_token(TOKEN_IDENTIFIER, buffer, buffer + 1, current_line);
+    Token *token = create_token(TOKEN_IDENTIFIER, buffer, buffer + 1, current_line);
+    symbol_table[symbol_count++] = *token;
+    return token;
 }
 
 void scanner_cleanup()

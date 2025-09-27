@@ -5,6 +5,11 @@
 
 #include "token.h" 
 
+#define MAX_SYMBOLS 100
+
+extern Token symbol_table[MAX_SYMBOLS];
+extern int symbol_count;
+
 /**
  * @param source_filename Nome do arquivo do código-fonte
  */
