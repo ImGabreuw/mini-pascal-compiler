@@ -498,15 +498,16 @@ void parser_parse_compound_statement()
 
 /* Declarações */
 
-// <formal parameters> ::= <empty> | var <variable declaration> { ; <variable declaration part> }
+// <formal parameters> ::= <empty> | var <variable declaration> { ; var <variable declaration> }
 void parser_parse_formal_parameters()
 {
     if (token_match(TOKEN_KEYWORD, "var"))
     {
         parser_parse_variable_declaration();
 
-        while (token_match(TOKEN_KEYWORD, ";"))
+        while (token_match(TOKEN_DELIMITER, ";"))
         {
+            token_expect(TOKEN_KEYWORD, "var");
             parser_parse_variable_declaration();
         }
     }

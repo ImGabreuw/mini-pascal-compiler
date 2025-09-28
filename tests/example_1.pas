@@ -1,7 +1,7 @@
 program correto ;
 var a, b, c : integer ;
 var d, e, f : boolean ;
-procedure proc(var a1 : integer ) ;
+procedure proc(var a1 : integer) ;
 var a, b, c : integer ;
 var d, e, f : boolean ;
 begin
