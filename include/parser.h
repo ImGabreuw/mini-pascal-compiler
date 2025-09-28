@@ -61,6 +61,8 @@ void parser_parse_variable_declaration_part();
 
 void parser_parse_block();
 
+void parser_parse_statement_part();
+
 void parser_parse_program();
 
 #endif // PARSER_H

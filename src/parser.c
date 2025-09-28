@@ -94,7 +94,7 @@ void parser_parse_multiplying_operator()
     if (token_match(TOKEN_OPERATOR_ARITHMETIC, "*"))
         return;
 
-    if (token_match(TOKEN_KEYWORD, "div"))
+    if (token_match(TOKEN_OPERATOR_ARITHMETIC, "div"))
         return;
 
     log_syntax_error(current_token);
@@ -176,7 +176,7 @@ void parser_parse_term()
 {
     parser_parse_factor();
 
-    while (token_check(TOKEN_OPERATOR_ARITHMETIC, "*") || token_check(TOKEN_KEYWORD, "div"))
+    while (token_check(TOKEN_OPERATOR_ARITHMETIC, "*") || token_check(TOKEN_OPERATOR_ARITHMETIC, "div"))
     {
         parser_parse_multiplying_operator();
         parser_parse_factor();
@@ -367,119 +367,10 @@ void parser_parse_statement()
 
     if (token_check(TOKEN_IDENTIFIER, NULL))
     {
-        Token *lookahead = current_token;
-        token_advance();
-
-        if (token_check(TOKEN_DELIMITER, "("))
-        {
-            current_token = lookahead;
-            parser_parse_function_procedure_statement();
-            return;
-        }
-        else if (token_check(TOKEN_OPERATOR_ASSIGNMENT, NULL))
-        {
-            token_advance();
-
-            if (token_check(TOKEN_IDENTIFIER, NULL))
-            {
-                current_token = lookahead;
-                parser_parse_function_procedure_statement();
-                return;
-            }
-            else
-            {
-                current_token = lookahead;
-                parser_parse_assignment_statement();
-                return;
-            }
-        }
-        else
-        {
-            log_syntax_error(current_token);
-            exit(EXIT_FAILURE);
-        }
-    }
-}
-
-/*
-<statement> ::=
-<assignment statement>
-| <function_procedure statement>
-| <read statement>
-| <write statement>
-| <compound statement>
-| <if statement>
-| <while statement>
-*/
-void parser_parse_statement_v2(){
-
-    if(token_check(TOKEN_KEYWORD,"read") || token_check(TOKEN_KEYWORD,"write")){
-        parser_parse_read_write_statement();
+        parser_parse_assignment_statement();
+        // FIXME <function_procedure statement> removido por enquanto
         return;
     }
-
-    if(token_check(TOKEN_KEYWORD,"if")){
-        parser_parse_if_statement();
-        return;
-    }
-
-    if(token_check(TOKEN_KEYWORD, "begin")){
-        parser_parse_compound_statement();
-        return;
-    }
-
-    if(token_check(TOKEN_KEYWORD,"while")){
-        parser_parse_while_statement();
-        return;
-
-    }
-
-    //assignment_statement ou function_procedure_statement
-    token_expect(TOKEN_IDENTIFIER,NULL);
-
-    //<function procedure identifier> (<parameters_list)
-    if(token_match(TOKEN_DELIMITER,"(")){
-        parser_parse_parameters_list();
-        
-        token_expect(TOKEN_DELIMITER,")");
-        
-        return;
-        
-    }
-
-    //Comparando <variable> := <function procedure identifier> (<parameters_list)
-    // e <variable> := <expression>
-    //Em ambos, espera aqui o :=
-    token_expect(TOKEN_OPERATOR_ASSIGNMENT,NULL);
-
-    //Caso <function_procedure_identifier>(function_procedure) ou <expression>(do assignment, que pode produzir <identifier> aqui)
-    if(token_check(TOKEN_IDENTIFIER,NULL)){
-        int curr_line = current_token->line; //Salva linha atual
-
-        token_advance(); // Olha para o proximo token
-        
-        //Se ainda nao acabou a linha, 
-        // validar se corresponde ao <function_procedure_identifier> ( <parameters list) 
-        //do <function_procedure_statement
-        if(current_token->line == curr_line){ 
-            token_expect(TOKEN_DELIMITER,"(");
-
-            parser_parse_parameters_list();
-
-            token_expect(TOKEN_DELIMITER,")");
-            return;
-        }
-
-        //Se acabou a linha, so podia ser producao do assignment
-        return;
-
-    }
-    else{ // Sera o assignment se passar em alguma das outras produções de expression
-        parser_parse_expression();
-
-    }
-
-
 }
 
 // <compound_statement> ::= begin <statement> { ; <statement> } end
@@ -513,7 +404,7 @@ void parser_parse_formal_parameters()
     }
 }
 
-// <function declaration> ::= function < identifier > < formal parameters > : < type > ; < block >
+// <function declaration> ::= function < identifier > < formal parameters > : < type > ; < block > ;
 void parser_parse_function_declaration()
 {
     token_expect(TOKEN_KEYWORD, "function");
@@ -523,30 +414,39 @@ void parser_parse_function_declaration()
     parser_parse_type();
     token_expect(TOKEN_DELIMITER, ";");
     parser_parse_block();
+    token_expect(TOKEN_DELIMITER, ";");
 }
 
-// <procedure declaration> ::= procedure < identifier > < formal parameters > ; <block>
+// <procedure declaration> ::= procedure < identifier > < formal parameters > ; <block> ;
 void parser_parse_procedure_declaration()
 {
     token_expect(TOKEN_KEYWORD, "procedure");
     token_expect(TOKEN_IDENTIFIER, NULL);
-    token_expect(TOKEN_DELIMITER, "(");
-    parser_parse_formal_parameters();
-    token_expect(TOKEN_DELIMITER, ")");
+
+    if (token_match(TOKEN_DELIMITER, "("))
+    {
+        parser_parse_formal_parameters();
+        token_expect(TOKEN_DELIMITER, ")");
+    }
+
     token_expect(TOKEN_DELIMITER, ";");
     parser_parse_block();
+    token_expect(TOKEN_DELIMITER, ";");
 }
 
-// <subroutine declaration part> ::= < procedure declaration | function declaration >
+// <subroutine declaration part> ::= <empty> | < procedure declaration | function declaration >
 void parser_parse_subroutine_declaration_part()
 {
-    if (token_check(TOKEN_KEYWORD, "procedure"))
+    while (token_check(TOKEN_KEYWORD, "procedure") || token_check(TOKEN_KEYWORD, "function"))
     {
-        parser_parse_procedure_declaration();
-    }
-    else
-    {
-        parser_parse_function_declaration();
+        if (token_check(TOKEN_KEYWORD, "procedure"))
+        {
+            parser_parse_procedure_declaration();
+        }
+        else if (token_check(TOKEN_KEYWORD, "function"))
+        {
+            parser_parse_function_declaration();
+        }
     }
 }
 
@@ -592,12 +492,18 @@ void parser_parse_variable_declaration_part()
     }
 }
 
-// <block> ::= <variable declaration part> <subroutine declaration part> <compound part>
+// <statement part> ::= <compound statement>
+void parser_parse_statement_part()
+{
+    parser_parse_compound_statement();
+}
+
+// <block> ::= <variable declaration part> <subroutine declaration part> <statement part>
 void parser_parse_block()
 {
     parser_parse_variable_declaration_part();
     parser_parse_subroutine_declaration_part();
-    parser_parse_compound_statement();
+    parser_parse_statement_part();
 }
 
 //<program> ::= program <identifier> ; <block> .
