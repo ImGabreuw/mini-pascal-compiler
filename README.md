@@ -203,3 +203,20 @@ $$\langle special\ symbol \rangle ::= \text{array} \mid \text{function} \mid \te
 - $\{α\}$ = repetição da cadeia $α$ zero ou mais vezes
 - $α \mid β$ = $α$ ou $β$ devem ser escolhidos
 - Não terminais aparecem entre $\langle$ e $\rangle$
+
+## Até onde foi feito
+- [x]  **ETAPA#1 - Expressões regulares, Gramática Livre de contexto e autômatos finitos**
+- [x] **ETAPA#2 - Analisador Léxico** 
+- [x] **ETAPA#3 - Analisador Sintático**
+
+## Problemas encontrados
+Nosso código têm um problema de vazamento de memória que pode ser observado ao adicionar a flag: *-fsanitize=address*, junto do caso de teste **example_1.pas**. O que ocorre, é que a função create_token() aloca um espaço de memória e este, ao final do código, não estão sendo devidamente desalocado em alguns casos. Entretanto, não conseguimos identificar e resolver a causa raiz.
+
+## Escolhas de design especiais
+Nesse ponto do projeto, gostaríamos de chamar a atenção para duas escolhas:
+1. Estruturas de log.
+2. Funções com alta legibilidade.
+
+A primeira, permite uma visualização mais fácil do conteúdo ques está sendo passado aos analisadores enquanto não afeta tanto o como nós tratamos o conteúdo que está sendo salvo. Isso nos permite indicar com precisão o conteúdo lido e como ele está sendo tratado.
+
+Já a segunda, consiste no estilo das funções, especialmente no analisador sintático, em que implementamos funções que realizam tanto o *parse* quanto realizam o desalocamento da memória. Em contraste, ao fazer um *parse* e a liberação de memória separadamente, viamos um conjunbto de funções muito mais complexas de ler e acompanhar. 
