@@ -65,6 +65,8 @@ static void token_expect(TokenType type, const char *value)
     token_advance();
 }
 
+/* Números e identificadores */
+
 // <constant> ::= <integer constant> | <constant identifier>
 void parser_parse_constant()
 {
@@ -77,6 +79,8 @@ void parser_parse_constant()
     log_syntax_error(current_token);
     exit(EXIT_FAILURE);
 }
+
+/* Expressões */
 
 // <variable> ::= <identifier>
 void parser_parse_variable()
@@ -204,47 +208,7 @@ void parser_parse_expression()
     }
 }
 
-// <type> ::= integer | boolean
-void parser_parse_type()
-{
-    if (!token_check(TOKEN_KEYWORD, "integer") && !token_check(TOKEN_KEYWORD, "boolean"))
-    {
-        log_syntax_error(current_token);
-        exit(EXIT_FAILURE);
-    }
-    token_advance();
-}
-
-// <variable declaration> ::= <identifier > { , <identifier> } : <type>
-void parser_parse_variable_declaration()
-{
-    token_expect(TOKEN_IDENTIFIER, NULL);
-
-    while (token_match(TOKEN_DELIMITER, ","))
-    {
-        token_expect(TOKEN_IDENTIFIER, NULL);
-    }
-
-    token_expect(TOKEN_DELIMITER, ":");
-
-    parser_parse_type();
-}
-
-// <variable declaration part> ::= <empty> | var <variable declaration> ; { <variable declaration part> ; }
-void parser_parse_variable_declaration_part()
-{
-    if (token_match(TOKEN_KEYWORD, "var"))
-    {
-        parser_parse_variable_declaration();
-        token_expect(TOKEN_DELIMITER, ";");
-
-        while (token_match(TOKEN_KEYWORD, "var"))
-        {
-            parser_parse_variable_declaration();
-            token_expect(TOKEN_DELIMITER, ";");
-        }
-    }
-}
+/* Comandos */
 
 // <while statement> ::= while <expression> do <statement>
 void parser_parse_while_statement()
@@ -296,13 +260,9 @@ void parser_parse_read_write_statement()
 void parser_parse_parameters_list()
 {
     token_expect(TOKEN_DELIMITER, "(");
-
-    // Tentar casar com ID,number e bool
     token_match(TOKEN_IDENTIFIER, NULL) || token_match(TOKEN_NUMBER, NULL) || token_match(TOKEN_BOOLEAN, NULL);
-
     token_expect(TOKEN_DELIMITER, ")");
 
-    // Repete 0 ou mais vezes
     while (token_match(TOKEN_DELIMITER, ","))
     {
         token_expect(TOKEN_DELIMITER, "(");
@@ -317,17 +277,26 @@ void parser_parse_parameters_list()
 */
 void parser_parse_function_procedure_statement()
 {
-    token_expect(TOKEN_IDENTIFIER, NULL); // equivalente a function_procedure identifier ou variable
-
-    if (token_match(TOKEN_OPERATOR_ASSIGNMENT, NULL))
+    if (token_match(TOKEN_IDENTIFIER, NULL))
     {
+        if (token_match(TOKEN_OPERATOR_ASSIGNMENT, NULL))
+        {
+            // <variable> := <function_procedure identifier> ( <parameters list>)
 
-        token_expect(TOKEN_IDENTIFIER, NULL); // function_procedure identifier
+            parser_parse_function_procedure_identifier();
+            parser_parse_parameters_list();
+            return;
+        }
+
+        // <function_procedure identifier> ( <parameters list> )
+
+        parser_parse_function_procedure_identifier();
+        parser_parse_parameters_list();
+        return;
     }
 
-    token_expect(TOKEN_DELIMITER, "(");
-    parser_parse_parameter_list();
-    token_expect(TOKEN_DELIMITER, ")");
+    log_syntax_error(current_token);
+    exit(EXIT_FAILURE);
 }
 
 // <assignment statement> ::= <variable> := <expression>
@@ -350,7 +319,6 @@ void parser_parse_assignment_statement()
 */
 void parser_parse_statement()
 {
-
     if (token_check(TOKEN_KEYWORD, "read") || token_check(TOKEN_KEYWORD, "write"))
     {
         parser_parse_read_write_statement();
@@ -375,11 +343,38 @@ void parser_parse_statement()
         return;
     }
 
+    
     if (token_check(TOKEN_IDENTIFIER, NULL))
     {
-        // TODO Definir como escolher um desses
-        // parser_parse_assignment_statement
-        // parser_parse_function_procedure_statement()
+        Token *lookahead = current_token;
+        token_advance();
+
+        if (token_check(TOKEN_DELIMITER, "("))
+        {
+            current_token = lookahead;
+            parser_parse_function_procedure_statement();
+            return;
+        }
+        else if (token_check(TOKEN_OPERATOR_ASSIGNMENT, NULL))
+        {
+            token_advance();
+
+            if (token_check(TOKEN_IDENTIFIER, NULL))
+            {
+                current_token = lookahead;
+                parser_parse_function_procedure_statement();
+                return;
+            } else {
+                current_token = lookahead;
+                parser_parse_assignment_statement();
+                return;
+            }
+        }
+        else
+        {
+            log_syntax_error(current_token);
+            exit(EXIT_FAILURE);
+        }
     }
 }
 
@@ -395,6 +390,14 @@ void parser_parse_compound_statement()
     }
 
     token_expect(TOKEN_KEYWORD, "end");
+}
+
+/* Declarações */
+
+// <formal parameters> ::= <variable declaration part>
+void parser_parse_formal_parameters()
+{
+    parser_parse_variable_declaration_part();
 }
 
 // <function declaration> ::= function < identifier > < formal parameters (variable declaration part) > : < type >; < block >
@@ -429,6 +432,48 @@ void parser_parse_subroutine_declaration_part()
     else
     {
         parser_parse_function_declaration();
+    }
+}
+
+// <type> ::= integer | boolean
+void parser_parse_type()
+{
+    if (!token_check(TOKEN_KEYWORD, "integer") && !token_check(TOKEN_KEYWORD, "boolean"))
+    {
+        log_syntax_error(current_token);
+        exit(EXIT_FAILURE);
+    }
+    token_advance();
+}
+
+// <variable declaration> ::= <identifier > { , <identifier> } : <type>
+void parser_parse_variable_declaration()
+{
+    token_expect(TOKEN_IDENTIFIER, NULL);
+
+    while (token_match(TOKEN_DELIMITER, ","))
+    {
+        token_expect(TOKEN_IDENTIFIER, NULL);
+    }
+
+    token_expect(TOKEN_DELIMITER, ":");
+
+    parser_parse_type();
+}
+
+// <variable declaration part> ::= <empty> | var <variable declaration> ; { <variable declaration part> ; }
+void parser_parse_variable_declaration_part()
+{
+    if (token_match(TOKEN_KEYWORD, "var"))
+    {
+        parser_parse_variable_declaration();
+        token_expect(TOKEN_DELIMITER, ";");
+
+        while (token_match(TOKEN_KEYWORD, "var"))
+        {
+            parser_parse_variable_declaration();
+            token_expect(TOKEN_DELIMITER, ";");
+        }
     }
 }
 
