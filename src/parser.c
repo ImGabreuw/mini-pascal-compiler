@@ -242,7 +242,13 @@ write ( <variable> { , <variable> } )
 */
 void parser_parse_read_write_statement()
 {
-    token_match(TOKEN_KEYWORD, "write") || token_match(TOKEN_KEYWORD, "read");
+    bool result = token_match(TOKEN_KEYWORD, "write") || token_match(TOKEN_KEYWORD, "read");
+
+    if (!result)
+    {
+        log_syntax_error(current_token);
+        exit(EXIT_FAILURE);
+    }
 
     token_expect(TOKEN_DELIMITER, "(");
 
@@ -260,13 +266,29 @@ void parser_parse_read_write_statement()
 void parser_parse_parameters_list()
 {
     token_expect(TOKEN_DELIMITER, "(");
-    token_match(TOKEN_IDENTIFIER, NULL) || token_match(TOKEN_NUMBER, NULL) || token_match(TOKEN_BOOLEAN, NULL);
+
+    bool result = token_match(TOKEN_IDENTIFIER, NULL) || token_match(TOKEN_NUMBER, NULL) || token_match(TOKEN_BOOLEAN, NULL);
+
+    if (!result)
+    {
+        log_syntax_error(current_token);
+        exit(EXIT_FAILURE);
+    }
+
     token_expect(TOKEN_DELIMITER, ")");
 
     while (token_match(TOKEN_DELIMITER, ","))
     {
         token_expect(TOKEN_DELIMITER, "(");
-        token_match(TOKEN_IDENTIFIER, NULL) || token_match(TOKEN_NUMBER, NULL) || token_match(TOKEN_BOOLEAN, NULL);
+
+        bool result = token_match(TOKEN_IDENTIFIER, NULL) || token_match(TOKEN_NUMBER, NULL) || token_match(TOKEN_BOOLEAN, NULL);
+
+        if (!result)
+        {
+            log_syntax_error(current_token);
+            exit(EXIT_FAILURE);
+        }
+
         token_expect(TOKEN_DELIMITER, ")");
     }
 }
@@ -283,14 +305,14 @@ void parser_parse_function_procedure_statement()
         {
             // <variable> := <function_procedure identifier> ( <parameters list>)
 
-            parser_parse_function_procedure_identifier();
+            token_expect(TOKEN_IDENTIFIER, NULL);
             parser_parse_parameters_list();
             return;
         }
 
         // <function_procedure identifier> ( <parameters list> )
 
-        parser_parse_function_procedure_identifier();
+        token_expect(TOKEN_IDENTIFIER, NULL);
         parser_parse_parameters_list();
         return;
     }
@@ -343,7 +365,6 @@ void parser_parse_statement()
         return;
     }
 
-    
     if (token_check(TOKEN_IDENTIFIER, NULL))
     {
         Token *lookahead = current_token;
@@ -364,7 +385,9 @@ void parser_parse_statement()
                 current_token = lookahead;
                 parser_parse_function_procedure_statement();
                 return;
-            } else {
+            }
+            else
+            {
                 current_token = lookahead;
                 parser_parse_assignment_statement();
                 return;
@@ -404,7 +427,7 @@ void parser_parse_formal_parameters()
 void parser_parse_function_declaration()
 {
     token_expect(TOKEN_KEYWORD, "function");
-    parser_parse_identifier();
+    token_expect(TOKEN_IDENTIFIER, NULL);
     parser_parse_variable_declaration_part();
     token_expect(TOKEN_DELIMITER, ":");
     parser_parse_type();
@@ -416,7 +439,7 @@ void parser_parse_function_declaration()
 void parser_parse_procedure_declaration()
 {
     token_expect(TOKEN_KEYWORD, "procedure");
-    parser_parse_identifier();
+    token_expect(TOKEN_IDENTIFIER, NULL);
     parser_parse_variable_declaration_part();
     token_expect(TOKEN_DELIMITER, ";");
     parser_parse_block();
@@ -489,15 +512,10 @@ void parser_parse_block()
 void parser_parse_program()
 {
     token_expect(TOKEN_KEYWORD, "program");
-    parser_parse_identifier();
+    token_expect(TOKEN_IDENTIFIER, NULL);
     token_expect(TOKEN_DELIMITER, ";");
     parser_parse_block();
     token_expect(TOKEN_DELIMITER, ".");
-}
-
-void parser_parse()
-{
-    parser_parse_variable_declaration_part();
 }
 
 void parser_init()
