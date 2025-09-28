@@ -401,6 +401,87 @@ void parser_parse_statement()
     }
 }
 
+/*
+<statement> ::=
+<assignment statement>
+| <function_procedure statement>
+| <read statement>
+| <write statement>
+| <compound statement>
+| <if statement>
+| <while statement>
+*/
+void parser_parse_statement_v2(){
+
+    if(token_check(TOKEN_KEYWORD,"read") || token_check(TOKEN_KEYWORD,"write")){
+        parser_parse_read_write_statement();
+        return;
+    }
+
+    if(token_check(TOKEN_KEYWORD,"if")){
+        parser_parse_if_statement();
+        return;
+    }
+
+    if(token_check(TOKEN_KEYWORD, "begin")){
+        parser_parse_compound_statement();
+        return;
+    }
+
+    if(token_check(TOKEN_KEYWORD,"while")){
+        parser_parse_while_statement();
+        return;
+
+    }
+
+    //assignment_statement ou function_procedure_statement
+    token_expect(TOKEN_IDENTIFIER,NULL);
+
+    //<function procedure identifier> (<parameters_list)
+    if(token_match(TOKEN_DELIMITER,"(")){
+        parser_parse_parameters_list();
+        
+        token_expect(TOKEN_DELIMITER,")");
+        
+        return;
+        
+    }
+
+    //Comparando <variable> := <function procedure identifier> (<parameters_list)
+    // e <variable> := <expression>
+    //Em ambos, espera aqui o :=
+    token_expect(TOKEN_OPERATOR_ASSIGNMENT,NULL);
+
+    //Caso <function_procedure_identifier>(function_procedure) ou <expression>(do assignment, que pode produzir <identifier> aqui)
+    if(token_check(TOKEN_IDENTIFIER,NULL)){
+        int curr_line = current_token->line; //Salva linha atual
+
+        token_advance(); // Olha para o proximo token
+        
+        //Se ainda nao acabou a linha, 
+        // validar se corresponde ao <function_procedure_identifier> ( <parameters list) 
+        //do <function_procedure_statement
+        if(current_token->line == curr_line){ 
+            token_expect(TOKEN_DELIMITER,"(");
+
+            parser_parse_parameters_list();
+
+            token_expect(TOKEN_DELIMITER,")");
+            return;
+        }
+
+        //Se acabou a linha, so podia ser producao do assignment
+        return;
+
+    }
+    else{ // Sera o assignment se passar em alguma das outras produções de expression
+        parser_parse_expression();
+
+    }
+
+
+}
+
 // <compound_statement> ::= begin <statement> { ; <statement> } end
 void parser_parse_compound_statement()
 {
