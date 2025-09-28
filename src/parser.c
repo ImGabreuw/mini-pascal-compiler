@@ -500,12 +500,12 @@ void parser_parse_variable_declaration_part()
     }
 }
 
-// <block> ::= <variable declaration part> <subroutine declaration part> <statement part>
+// <block> ::= <variable declaration part> <subroutine declaration part> <compound part>
 void parser_parse_block()
 {
     parser_parse_variable_declaration_part();
     parser_parse_subroutine_declaration_part();
-    parser_parse_statement_part();
+    parser_parse_compound_statement();
 }
 
 //<program> ::= program <identifier> ; <block> .
