@@ -417,30 +417,40 @@ void parser_parse_compound_statement()
 
 /* Declarações */
 
-// <formal parameters> ::= <variable declaration part>
+// <formal parameters> ::= <empty> | var <variable declaration> { ; <variable declaration part> }
 void parser_parse_formal_parameters()
 {
-    parser_parse_variable_declaration_part();
+    if (token_match(TOKEN_KEYWORD, "var"))
+    {
+        parser_parse_variable_declaration();
+
+        while (token_match(TOKEN_KEYWORD, ";"))
+        {
+            parser_parse_variable_declaration();
+        }
+    }
 }
 
-// <function declaration> ::= function < identifier > < formal parameters (variable declaration part) > : < type >; < block >
+// <function declaration> ::= function < identifier > < formal parameters > : < type > ; < block >
 void parser_parse_function_declaration()
 {
     token_expect(TOKEN_KEYWORD, "function");
     token_expect(TOKEN_IDENTIFIER, NULL);
-    parser_parse_variable_declaration_part();
+    parser_parse_formal_parameters();
     token_expect(TOKEN_DELIMITER, ":");
     parser_parse_type();
     token_expect(TOKEN_DELIMITER, ";");
     parser_parse_block();
 }
 
-// <procedure declaration> ::= procedure < identifier > < formal parameters (variable declaration part) > ; <block>
+// <procedure declaration> ::= procedure < identifier > < formal parameters > ; <block>
 void parser_parse_procedure_declaration()
 {
     token_expect(TOKEN_KEYWORD, "procedure");
     token_expect(TOKEN_IDENTIFIER, NULL);
-    parser_parse_variable_declaration_part();
+    token_expect(TOKEN_DELIMITER, "(");
+    parser_parse_formal_parameters();
+    token_expect(TOKEN_DELIMITER, ")");
     token_expect(TOKEN_DELIMITER, ";");
     parser_parse_block();
 }
@@ -448,7 +458,7 @@ void parser_parse_procedure_declaration()
 // <subroutine declaration part> ::= < procedure declaration | function declaration >
 void parser_parse_subroutine_declaration_part()
 {
-    if (token_match(TOKEN_KEYWORD, "procedure"))
+    if (token_check(TOKEN_KEYWORD, "procedure"))
     {
         parser_parse_procedure_declaration();
     }
