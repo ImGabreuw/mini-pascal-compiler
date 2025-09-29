@@ -17,6 +17,7 @@ static void token_advance()
 {
     if (current_token)
     {
+        free(current_token->value);
         free(current_token);
     }
     current_token = get_token();
