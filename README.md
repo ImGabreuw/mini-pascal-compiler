@@ -210,7 +210,7 @@ $$\langle special\ symbol \rangle ::= \text{array} \mid \text{function} \mid \te
 - [x] **ETAPA#3 - Analisador Sintático**
 
 ## Problemas encontrados
-Nosso código têm um problema de vazamento de memória que pode ser observado ao adicionar a flag: *-fsanitize=address*, junto do caso de teste **example_1.pas**. O que ocorre, é que a função create_token() aloca um espaço de memória e este, ao final do código, não estão sendo devidamente desalocado em alguns casos. Entretanto, não conseguimos identificar e resolver a causa raiz.
+Nenhum problema foi encontrado ou persistiu até esse ponto do projeto.
 
 ## Escolhas de design especiais
 Nesse ponto do projeto, gostaríamos de chamar a atenção para duas escolhas:
