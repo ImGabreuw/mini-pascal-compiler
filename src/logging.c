@@ -34,6 +34,17 @@ void log_token(const Token *token)
     }
 }
 
+void log_lexical_error(int line, char invalid_char)
+{
+    if (token_file)
+    {
+        char log_line[MAX_LOG_LINE];
+        snprintf(log_line, sizeof(log_line), "Lexical Error at line %02d: invalid character '%c' (ASCII code: %d)\n", line, invalid_char, invalid_char);
+
+        printf("%s", log_line);
+    }
+}
+
 void log_syntax_error(const Token *token)
 {
     if (token_file)

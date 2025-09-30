@@ -1,10 +1,8 @@
+/* Teste de programa correto com comentarios */
 
-
-
-
-    program correto ;
-var a, b, c : integer ;
-var d, e, f : boolean ;
+program correto ;
+var a, b, c : integer ; /* Teste de programa correto com comentarios */
+/* Teste de programa correto com comentarios */ var d, e, f : boolean ;
 procedure proc(var a1 : integer) ;
 var a, b, c : integer ;
 var d, e, f : boolean ;

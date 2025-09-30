@@ -2,6 +2,7 @@
 #define TOKEN_H
 
 #define MAX_TOKEN_LENGTH 50
+#define MAX_COMMENT_LENGTH 250
 
 extern const char *keywords[];
 extern const int num_keywords;

@@ -221,6 +221,73 @@ Token *get_token()
         return NULL;
     }
 
+    // Reconhecer comentários
+    if (ch == '/')
+    {
+        int next_ch = fgetc(source_file);
+        if (next_ch == '*')
+        {
+            // Processar comentário completo
+            char comment_buffer[MAX_COMMENT_LENGTH];
+            int comment_index = 0;
+
+            comment_buffer[comment_index++] = ch;
+            comment_buffer[comment_index++] = next_ch;
+
+            bool comment_closed = false;
+            while ((ch = fgetc(source_file)) != EOF)
+            {
+                if (ch == '\n')
+                {
+                    current_line++;
+                }
+
+                if (comment_index < MAX_COMMENT_LENGTH - 1)
+                {
+                    comment_buffer[comment_index++] = ch;
+                }
+
+                if (ch == '*')
+                {
+                    int potential_end = fgetc(source_file);
+                    if (potential_end == '/')
+                    {
+                        if (comment_index < MAX_COMMENT_LENGTH - 1)
+                        {
+                            comment_buffer[comment_index++] = potential_end;
+                        }
+                        comment_closed = true;
+                        break;
+                    }
+                    else
+                    {
+                        ungetc(potential_end, source_file);
+                    }
+                }
+            }
+
+            if (!comment_closed)
+            {
+                fprintf(stderr, "Lexical Error: Unterminated comment starting at line %d\n", current_line);
+                exit(EXIT_FAILURE);
+            }
+
+            comment_buffer[comment_index] = '\0';
+
+            Token *token = create_token(TOKEN_COMMENT, comment_buffer, comment_buffer + comment_index, current_line);
+            log_token(token);
+
+            free(token->value);
+            free(token);
+            
+            return get_token(); // Pegar o próximo token após o comentário
+        }
+        else
+        {
+            ungetc(next_ch, source_file);
+        }
+    }
+
     // Colocar o primeiro caractere válido de volta
     ungetc(ch, source_file);
 
@@ -295,19 +362,13 @@ Token *get_token()
             current_match = 1;
         }
 
-        if (recognize_comment(buffer))
-        {
-            last_match_type = TOKEN_COMMENT;
-            current_match = 1;
-        }
-
         if (current_match)
         {
             last_match_length = buffer_index;
         }
         else
         {
-            // O caractere 'c' quebrou todas as correspondências do buffer
+            // O caractere quebrou todas as correspondências do buffer
             ungetc(ch, source_file); // Voltar uma posição no arquivo
             break;
         }
@@ -320,7 +381,8 @@ Token *get_token()
         Token *token = create_token(last_match_type, buffer, buffer + last_match_length, current_line);
         log_token(token);
 
-        if (token->type == TOKEN_IDENTIFIER) {
+        if (token->type == TOKEN_IDENTIFIER)
+        {
             symbol_table[symbol_count++] = *token;
         }
 
@@ -333,15 +395,10 @@ Token *get_token()
         return NULL;
     }
 
-    // Trata caracteres únicos que não correspondem a nenhum token
+    // Nenhum token foi reconhecido
     ch = fgetc(source_file);
-    buffer[0] = ch;
-    buffer[1] = '\0';
-
-    Token *token = create_token(TOKEN_IDENTIFIER, buffer, buffer + 1, current_line);
-    log_token(token);
-    symbol_table[symbol_count++] = *token;
-    return token;
+    log_lexical_error(current_line, ch);
+    exit(EXIT_FAILURE);
 }
 
 void scanner_cleanup()
