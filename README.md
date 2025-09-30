@@ -74,6 +74,11 @@ end .
   - `var`, `integer`, `boolean`, `true`, `false`
   - `write`
 
+## Autômato global para análise léxica
+
+![](https://github.com/user-attachments/assets/890a88ab-c9f2-4d59-b737-7b8f2f22a2df)
+
+
 ## Gramática Livre de Contexto (GLC)
 
 ### Estrutura do Programa
