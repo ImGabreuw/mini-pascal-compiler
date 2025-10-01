@@ -405,12 +405,14 @@ void parser_parse_formal_parameters()
     }
 }
 
-// <function declaration> ::= function < identifier > < formal parameters > : < type > ; < block > ;
+// <function declaration> ::= function < identifier > ( < formal parameters > ) : < type > ; < block > ;
 void parser_parse_function_declaration()
 {
     token_expect(TOKEN_KEYWORD, "function");
     token_expect(TOKEN_IDENTIFIER, NULL);
+    token_expect(TOKEN_DELIMITER,"(");
     parser_parse_formal_parameters();
+    token_expect(TOKEN_DELIMITER,")");
     token_expect(TOKEN_DELIMITER, ":");
     parser_parse_type();
     token_expect(TOKEN_DELIMITER, ";");
@@ -418,7 +420,7 @@ void parser_parse_function_declaration()
     token_expect(TOKEN_DELIMITER, ";");
 }
 
-// <procedure declaration> ::= procedure < identifier > < formal parameters > ; <block> ;
+// <procedure declaration> ::= procedure < identifier > ( < formal parameters > ) ; <block> ;
 void parser_parse_procedure_declaration()
 {
     token_expect(TOKEN_KEYWORD, "procedure");

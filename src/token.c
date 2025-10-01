@@ -4,7 +4,7 @@
 #include "token.h"
 
 const char *keywords[] = {
-    "program", "begin", "end", "procedure", "if", "then", "else", "while", "do",
+    "program", "begin", "end", "procedure", "function", "if", "then", "else", "while", "do",
     "and", "or", "not", "var", "integer", "boolean", "true", "false", "write", "div"};
 
 const int num_keywords = sizeof(keywords) / sizeof(keywords[0]);
