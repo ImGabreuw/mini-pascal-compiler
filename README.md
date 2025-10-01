@@ -224,4 +224,4 @@ Nesse ponto do projeto, gostaríamos de chamar a atenção para duas escolhas:
 
 A primeira, permite uma visualização mais fácil do conteúdo ques está sendo passado aos analisadores enquanto não afeta tanto o como nós tratamos o conteúdo que está sendo salvo. Isso nos permite indicar com precisão o conteúdo lido e como ele está sendo tratado.
 
-Já a segunda, consiste no estilo das funções, especialmente no analisador sintático, em que implementamos funções que realizam tanto o *parse* quanto realizam o desalocamento da memória. Em contraste, ao fazer um *parse* e a liberação de memória separadamente, viamos um conjunbto de funções muito mais complexas de ler e acompanhar. 
+Já a segunda, consiste no estilo das funções, especialmente no analisador sintático, em que implementamos funções que realizam tanto o *parse* quanto realizam o desalocamento da memória. Em contraste, ao fazer um *parse* e a liberação de memória separadamente, viamos um conjunto de funções muito mais complexas de ler e acompanhar. 
