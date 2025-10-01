@@ -97,13 +97,15 @@ $$\langle type \rangle ::= \text{integer} \mid \text{boolean}$$
 
 $$\langle subroutine\ declaration\ part \rangle ::= \langle procedure\ declaration \mid function\ declaration \rangle$$
 
-$$\langle procedure\ declaration \rangle ::= \text{procedure } \langle identifier \rangle \langle formal\ parameters \rangle \text{ ; } \langle block \rangle$$
+$$\langle procedure\ declaration \rangle ::= \text{procedure } \langle identifier \rangle \text{ (} \langle formal\ parameters \rangle \text{) ; } \langle block \rangle$$
 
-$$\langle function\ declaration \rangle ::= \text{function } \langle identifier \rangle \langle formal\ parameters \rangle \text{ : } \langle type \rangle \text{ ; } \langle block \rangle$$
+$$\langle function\ declaration \rangle ::= \text{function } \langle identifier \rangle \text{ (} \langle formal\ parameters \rangle \text{) : } \langle type \rangle \text{ ; } \langle block \rangle$$
 
-$$\langle formal\ parameters \rangle ::= \langle variable\ declaration\ part \rangle$$
+$$\langle formal\ parameters \rangle \;::=\; 
+\langle empty \rangle 
+\;\mid\; \text{var}\;\langle variable\ declaration \rangle 
+\;\{\, ;\;\text{var}\;\langle variable\ declaration \rangle \,\}$$
 
-> **OBS:** Todos os identificadores devem ser declarados antes de serem utilizados.
 
 ### Comandos
 
