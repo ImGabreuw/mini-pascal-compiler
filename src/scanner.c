@@ -383,6 +383,7 @@ Token *get_token()
 
         if (token->type == TOKEN_IDENTIFIER)
         {
+            token->simbols_table_idx = symbol_count;
             symbol_table[symbol_count++] = *token;
         }
 
