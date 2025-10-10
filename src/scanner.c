@@ -390,6 +390,7 @@ Token *get_token()
         return token;
     }
 
+    //TODO avaliar necessidade desse bloco
     // Se o caractere atual for EOF (acabou o arquivo)
     if (ch == EOF)
     {
