@@ -1,4 +1,15 @@
 # Mini Pascal Compiler
+## Etapas para compilação e execução do projeto
+
+### Compilar
+
+Para compilar todos os arquivos, use apenas 'make' na raiz do projeto
+> make
+
+### Executar
+Use ./<binário> <arquivo_de_teste> <br>
+Ex:
+> ./compiler tests/example_1.pas
 
 ## Linguagem Mini Pascal
 

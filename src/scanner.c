@@ -383,12 +383,14 @@ Token *get_token()
 
         if (token->type == TOKEN_IDENTIFIER)
         {
+            token->simbols_table_idx = symbol_count;
             symbol_table[symbol_count++] = *token;
         }
 
         return token;
     }
 
+    //TODO avaliar necessidade desse bloco
     // Se o caractere atual for EOF (acabou o arquivo)
     if (ch == EOF)
     {

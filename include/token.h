@@ -40,6 +40,7 @@ typedef struct
     TokenType type;
     char *value;
     int line;
+    int simbols_table_idx;
 } Token;
 
 /**
