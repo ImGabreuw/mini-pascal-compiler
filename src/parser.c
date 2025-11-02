@@ -7,6 +7,7 @@
 
 #include "scanner.h"
 #include "logging.h"
+#include "symbol_table.h"
 
 static Token *current_token = NULL;
 
@@ -86,7 +87,19 @@ void parser_parse_constant()
 // <variable> ::= <identifier>
 void parser_parse_variable()
 {
-    token_expect(TOKEN_IDENTIFIER, NULL);
+    if (!token_check(TOKEN_IDENTIFIER, NULL))
+    {
+        log_syntax_error(current_token);
+        exit(EXIT_FAILURE);
+    }
+
+    if (!symbol_table_exists(current_token->value))
+    {
+        log_semantic_error_undeclared(current_token->line, current_token->value);
+        exit(EXIT_FAILURE);
+    }
+
+    token_advance();
 }
 
 // <multiplying operator> ::= * | div
@@ -325,7 +338,26 @@ void parser_parse_function_procedure_statement()
 // <assignment statement> ::= <variable> := <expression>
 void parser_parse_assignment_statement()
 {
-    token_expect(TOKEN_IDENTIFIER, NULL);
+    if (!token_check(TOKEN_IDENTIFIER, NULL))
+    {
+        log_syntax_error(current_token);
+        exit(EXIT_FAILURE);
+    }
+
+    char identifier[MAX_IDENTIFIER_LENGTH];
+    strncpy(identifier, current_token->value, MAX_IDENTIFIER_LENGTH - 1);
+    identifier[MAX_IDENTIFIER_LENGTH - 1] = '\0';
+    int line = current_token->line;
+
+    if (!symbol_table_exists(identifier))
+    {
+        log_semantic_error_undeclared(line, identifier);
+        exit(EXIT_FAILURE);
+    }
+
+    const char *var_type = symbol_table_get_type(identifier);
+
+    token_advance();
     token_expect(TOKEN_OPERATOR_ASSIGNMENT, NULL);
     parser_parse_expression();
 }
@@ -467,16 +499,60 @@ void parser_parse_type()
 // <variable declaration> ::= <identifier > { , <identifier> } : <type>
 void parser_parse_variable_declaration()
 {
-    token_expect(TOKEN_IDENTIFIER, NULL);
+    char identifiers[100][MAX_IDENTIFIER_LENGTH];
+    int identifier_count = 0;
+    int first_line = current_token->line;
 
+    // Primeiro identificador
+    if (!token_check(TOKEN_IDENTIFIER, NULL))
+    {
+        log_syntax_error(current_token);
+        exit(EXIT_FAILURE);
+    }
+
+    strncpy(identifiers[identifier_count], current_token->value, MAX_IDENTIFIER_LENGTH - 1);
+    identifiers[identifier_count][MAX_IDENTIFIER_LENGTH - 1] = '\0';
+    identifier_count++;
+
+    token_advance();
+
+    // Identificadores adicionais
     while (token_match(TOKEN_DELIMITER, ","))
     {
-        token_expect(TOKEN_IDENTIFIER, NULL);
+        if (!token_check(TOKEN_IDENTIFIER, NULL))
+        {
+            log_syntax_error(current_token);
+            exit(EXIT_FAILURE);
+        }
+
+        strncpy(identifiers[identifier_count], current_token->value, MAX_IDENTIFIER_LENGTH - 1);
+        identifiers[identifier_count][MAX_IDENTIFIER_LENGTH - 1] = '\0';
+        identifier_count++;
+        token_advance();
     }
 
     token_expect(TOKEN_DELIMITER, ":");
 
+    if (!token_check(TOKEN_KEYWORD, "integer") && !token_check(TOKEN_KEYWORD, "boolean"))
+    {
+        log_syntax_error(current_token);
+        exit(EXIT_FAILURE);
+    }
+
+    char type[MAX_TYPE_LENGTH];
+    strncpy(type, current_token->value, MAX_TYPE_LENGTH - 1);
+    type[MAX_TYPE_LENGTH - 1] = '\0';
+    
     parser_parse_type();
+
+    for (int i = 0; i < identifier_count; i++)
+    {
+        if (!symbol_table_insert(identifiers[i], type))
+        {
+            log_semantic_error_duplicate(first_line, identifiers[i]);
+            exit(EXIT_FAILURE);
+        }
+    }
 }
 
 // <variable declaration part> ::= <empty> | var <variable declaration> ; { <variable declaration part> ; }
@@ -521,12 +597,14 @@ void parser_parse_program()
 
 void parser_init()
 {
+    symbol_table_init();
     token_advance(); // Inicializa o primeiro token
 }
 
 void parser_parse()
 {
     parser_parse_program();
+    symbol_table_print();
 }
 
 void parser_cleanup()
@@ -536,4 +614,5 @@ void parser_cleanup()
         free(current_token);
         current_token = NULL;
     }
+    symbol_table_cleanup();
 }

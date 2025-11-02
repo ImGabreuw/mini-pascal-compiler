@@ -12,9 +12,6 @@
 static FILE *source_file;
 static int current_line = 1;
 
-Token symbol_table[MAX_SYMBOLS];
-int symbol_count = 0;
-
 static bool is_letter(const char ch)
 {
     return isalpha(ch) || ch == '_';
@@ -279,7 +276,7 @@ Token *get_token()
 
             free(token->value);
             free(token);
-            
+
             return get_token(); // Pegar o próximo token após o comentário
         }
         else
@@ -380,12 +377,6 @@ Token *get_token()
         buffer[last_match_length] = '\0';
         Token *token = create_token(last_match_type, buffer, buffer + last_match_length, current_line);
         log_token(token);
-
-        if (token->type == TOKEN_IDENTIFIER)
-        {
-            symbol_table[symbol_count++] = *token;
-        }
-
         return token;
     }
 
