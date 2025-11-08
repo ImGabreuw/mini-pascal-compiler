@@ -14,9 +14,9 @@ if ( d ) then
  begin
 a := 20 ;
 b := 10 * c ;
-c := a div b ;
+d:= false ;
  end ;
-while ( a > 1 ) do
+while ( 2 > 1 ) do
  begin
 if ( b > 10 ) then
 b := 2 ;

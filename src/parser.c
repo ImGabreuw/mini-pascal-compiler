@@ -11,7 +11,7 @@
 
 static Token *current_token = NULL;
 
-static bool is_comparing = false;
+static bool is_assignment = true;
 
 static char expected_id_type[MAX_TYPE_LENGTH];
 
@@ -91,7 +91,9 @@ void parser_parse_constant()
 {
     if (token_check(TOKEN_NUMBER, NULL)){
         
-        identifier_type_expect(expected_id_type,"integer",current_token->line,current_token->value);
+        if(is_assignment){
+            identifier_type_expect(expected_id_type,"integer",current_token->line,current_token->value);
+        }
         
         token_advance();
         
@@ -215,7 +217,7 @@ void parser_parse_factor()
         int line = current_token->line;
         const char* type_read = symbol_table_get_type(current_token->value);
         strcpy(last_identifier_found,current_token->value);
-        if(is_comparing) {
+        if(!is_assignment) {
             strcpy(expected_id_type, type_read);
         }
 
@@ -273,9 +275,9 @@ void parser_parse_expression()
 void parser_parse_while_statement()
 {
     token_expect(TOKEN_KEYWORD, "while");
-    is_comparing = true;
+    is_assignment = false;
     parser_parse_expression();
-    is_comparing = false;
+    is_assignment = true;
     token_expect(TOKEN_KEYWORD, "do");
     parser_parse_statement();
 }
@@ -284,18 +286,16 @@ void parser_parse_while_statement()
 void parser_parse_if_statement()
 {
     token_expect(TOKEN_KEYWORD, "if");
-    is_comparing = true;
+    is_assignment = false;
     parser_parse_expression();
     token_expect(TOKEN_KEYWORD, "then");
-    is_comparing = false;
     parser_parse_statement();
     
     if (token_match(TOKEN_KEYWORD, "else"))
     {
-        is_comparing = true;
         parser_parse_statement();
-        is_comparing = false;
     }
+    is_assignment = true;
 }
 
 /*
