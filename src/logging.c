@@ -27,7 +27,7 @@ void log_token(const Token *token)
     if (token_file)
     {
         char log_line[MAX_LOG_LINE];
-        snprintf(log_line, sizeof(log_line), "%02d # %-30s | %s\n", token->line, token_type_to_string(token->type), token->value);
+        snprintf(log_line,sizeof(log_line),"%02d # %-30s | %s\n",token->line, (token->type == TOKEN_KEYWORD ? token->value : token_type_to_string(token->type)),token->value);
 
         printf("%s", log_line);
         fprintf(token_file, "%s", log_line);
