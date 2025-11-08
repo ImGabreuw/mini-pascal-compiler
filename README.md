@@ -1,5 +1,20 @@
 # Mini Pascal Compiler
 
+## Compilar e Executar
+
+Estando na pasta raiz do projeto 'mini-pascal-compiler':
+### Compilar
+>make
+
+- Apenas usando 'make' o arquivo principal e os associados já serão compilados.
+
+### Executar
+>./compiler <caminho_para_arquivo_de_teste>
+
+Ex:
+
+> ./compiler tests/example_1.pas
+
 ## Linguagem Mini Pascal
 
 - Linguagem case sensitive

@@ -15,4 +15,4 @@ clean:
 compile: $(SRC_FILES)
 	@$(CC) $(CFLAGS) -o $(OUTPUT) $(SRC_FILES)
 
-# "@" before a command suppresses the command output
+# "@" para nao exibir o comando executado em tela
