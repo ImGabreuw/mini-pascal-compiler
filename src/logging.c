@@ -81,7 +81,7 @@ void log_semantic_error_undeclared(int line, const char *identifier)
 void log_semantic_error_type_mismatch(int line, const char *identifier, const char *expected_type, const char *actual_type)
 {
     char log_line[MAX_LOG_LINE];
-    snprintf(log_line, sizeof(log_line), "Semantic Error at line %02d: Type mismatch for variable '%s' (expected: %s, actual: %s)\n", 
+    snprintf(log_line, sizeof(log_line), "Semantic Error at line %02d: Type mismatch for '%s' (expected: %s, actual: %s)\n", 
              line, identifier, expected_type, actual_type);
     printf("%s", log_line);
 }

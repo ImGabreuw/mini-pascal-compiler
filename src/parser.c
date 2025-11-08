@@ -11,6 +11,12 @@
 
 static Token *current_token = NULL;
 
+static bool is_comparing = false;
+
+static char expected_id_type[MAX_TYPE_LENGTH];
+
+static char last_identifier_found[MAX_IDENTIFIER_LENGTH];
+
 /**
  * @brief Libera o espaço alocado para o token atual e obtém o próximo token do analisador léxico.
  */
@@ -67,16 +73,43 @@ static void token_expect(TokenType type, const char *value)
     token_advance();
 }
 
+/**
+ * @brief Avalia se o tipo lido equivale ao tipo esperado
+ */
+
+ static void identifier_type_expect(const char* expected_type, const char* actual_type, int line, char* identifier){
+    if(strcmp(actual_type,expected_type)){
+        log_semantic_error_type_mismatch(line,identifier,expected_type,actual_type);
+        exit(1);
+    }
+ }
+
 /* Números e identificadores */
 
 // <constant> ::= <integer constant> | <constant identifier>
 void parser_parse_constant()
 {
-    if (token_match(TOKEN_NUMBER, NULL))
+    if (token_check(TOKEN_NUMBER, NULL)){
+        
+        identifier_type_expect(expected_id_type,"integer",current_token->line,current_token->value);
+        
+        token_advance();
+        
         return;
+    }
+    
+    if (token_check(TOKEN_IDENTIFIER, NULL)){
 
-    if (token_match(TOKEN_IDENTIFIER, NULL))
+        const char* type_read = symbol_table_get_type(current_token->value);
+
+        identifier_type_expect(expected_id_type,type_read,current_token->line,current_token->value);
+
+        strcpy(last_identifier_found,current_token->value);
+
+        token_advance();
+
         return;
+    }
 
     log_syntax_error(current_token);
     exit(EXIT_FAILURE);
@@ -154,7 +187,7 @@ void parser_parse_relational_operator()
     exit(EXIT_FAILURE);
 }
 
-// <factor> ::= <variable> | <constant> | ( <expression> ) | not <factor> | bool
+// <factor> ::= <variable> | <constant> | ( <expression> ) | not <factor> | <bool>
 void parser_parse_factor()
 {
     if (token_match(TOKEN_DELIMITER, "("))
@@ -172,13 +205,24 @@ void parser_parse_factor()
 
     if (token_check(TOKEN_BOOLEAN, NULL))
     {
+        identifier_type_expect(expected_id_type,"boolean",current_token->line,current_token->value);
         token_advance();
         return;
     }
 
     if (token_check(TOKEN_IDENTIFIER, NULL))
     {
+        int line = current_token->line;
+        const char* type_read = symbol_table_get_type(current_token->value);
+        strcpy(last_identifier_found,current_token->value);
+        if(is_comparing) {
+            strcpy(expected_id_type, type_read);
+        }
+
         parser_parse_variable();
+
+        identifier_type_expect(expected_id_type,type_read,line,last_identifier_found);
+
         return;
     }
 
@@ -218,6 +262,7 @@ void parser_parse_expression()
     if (token_check(TOKEN_OPERATOR_RELATIONAL, NULL))
     {
         parser_parse_relational_operator();
+
         parser_parse_simple_expression();
     }
 }
@@ -228,7 +273,9 @@ void parser_parse_expression()
 void parser_parse_while_statement()
 {
     token_expect(TOKEN_KEYWORD, "while");
+    is_comparing = true;
     parser_parse_expression();
+    is_comparing = false;
     token_expect(TOKEN_KEYWORD, "do");
     parser_parse_statement();
 }
@@ -237,13 +284,17 @@ void parser_parse_while_statement()
 void parser_parse_if_statement()
 {
     token_expect(TOKEN_KEYWORD, "if");
+    is_comparing = true;
     parser_parse_expression();
     token_expect(TOKEN_KEYWORD, "then");
+    is_comparing = false;
     parser_parse_statement();
-
+    
     if (token_match(TOKEN_KEYWORD, "else"))
     {
+        is_comparing = true;
         parser_parse_statement();
+        is_comparing = false;
     }
 }
 
@@ -356,6 +407,10 @@ void parser_parse_assignment_statement()
     }
 
     const char *var_type = symbol_table_get_type(identifier);
+
+    strcpy(expected_id_type,var_type);
+    
+    strcpy(last_identifier_found,identifier);
 
     token_advance();
     token_expect(TOKEN_OPERATOR_ASSIGNMENT, NULL);
