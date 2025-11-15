@@ -355,7 +355,7 @@ void parser_parse_assignment_statement()
         exit(EXIT_FAILURE);
     }
 
-    const char *var_type = symbol_table_get_type(identifier);
+    // const char *var_type = symbol_table_get_type(identifier);
 
     token_advance();
     token_expect(TOKEN_OPERATOR_ASSIGNMENT, NULL);

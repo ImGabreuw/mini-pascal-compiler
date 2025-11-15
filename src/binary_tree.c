@@ -1,8 +1,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <ctype.h>
-#include "../include/binary_tree.h"
-#include "../include/stack.h"
+
+#include "binary_tree.h"
+#include "stack.h"
 
 Node* newNode(char c) {
     Node* n = malloc(sizeof(Node));

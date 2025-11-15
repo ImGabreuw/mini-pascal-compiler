@@ -1,5 +1,6 @@
 #include <ctype.h>
-#include "../include/stack.h"
+
+#include "stack.h"
 #include "postfix_converter.h"
 
 void infixToPostfix(char infix[], char postfix[]) {
