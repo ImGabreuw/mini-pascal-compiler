@@ -9,25 +9,25 @@ void parser_parse();
 
 void parser_cleanup();
 
-void parser_parse_constant();
+char* parser_parse_constant();
 
-void parser_parse_variable();
+char* parser_parse_variable();
 
 void parser_parse_multiplying_operator();
 
 void parser_parse_adding_operator();
 
-void parser_parse_sign();
+char* parser_parse_sign();
 
 void parser_parse_relational_operator();
 
-void parser_parse_factor();
+char* parser_parse_factor();
 
-void parser_parse_term();
+char* parser_parse_term();
 
-void parser_parse_simple_expression();
+char* parser_parse_simple_expression();
 
-void parser_parse_expression();
+char* parser_parse_expression();
 
 void parser_parse_while_statement();
 
