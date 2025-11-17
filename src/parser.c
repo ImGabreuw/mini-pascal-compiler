@@ -90,7 +90,6 @@ static void identifier_type_expect(const char *expected_type, const char *actual
 /* Números e identificadores */
 
 // <constant> ::= <integer constant>
-// Modificado para retornar char*
 char *parser_parse_constant()
 {
     if (token_check(TOKEN_NUMBER, NULL))
@@ -101,21 +100,19 @@ char *parser_parse_constant()
             identifier_type_expect(expected_id_type, "integer", current_token->line, current_token->value);
         }
 
-        char *num_str = strdup(current_token->value); // Aloca
+        char *num_str = strdup(current_token->value); 
         token_advance();
-        return num_str; // Retorna alocado
+        return num_str;
     }
 
-    // <constant identifier> não é mais tratado aqui, mas em <factor>
     log_syntax_error(current_token);
     exit(EXIT_FAILURE);
-    return NULL; // Nunca alcançado
+    return NULL; 
 }
 
 /* Expressões */
 
 // <variable> ::= <identifier>
-// Modificado para retornar char*
 char *parser_parse_variable()
 {
     if (!token_check(TOKEN_IDENTIFIER, NULL))
@@ -130,9 +127,9 @@ char *parser_parse_variable()
         exit(EXIT_FAILURE);
     }
 
-    char *var_name = strdup(current_token->value); // Aloca
+    char *var_name = strdup(current_token->value); 
     token_advance();
-    return var_name; // Retorna alocado
+    return var_name; 
 }
 
 // <multiplying operator> ::= * | div
@@ -162,24 +159,23 @@ void parser_parse_adding_operator()
 }
 
 // <sign> ::= + | - | <empty>
-// Modificado para retornar char* (o sinal) ou NULL
 char *parser_parse_sign()
 {
     if (token_check(TOKEN_OPERATOR_ARITHMETIC, "+"))
     {
-        char *sign = strdup(current_token->value); // Aloca
+        char *sign = strdup(current_token->value); 
         token_advance();
         return sign;
     }
 
     if (token_check(TOKEN_OPERATOR_ARITHMETIC, "-"))
     {
-        char *sign = strdup(current_token->value); // Aloca
+        char *sign = strdup(current_token->value); 
         token_advance();
         return sign;
     }
 
-    return NULL; // <empty>
+    return NULL;
 }
 
 // <relational operator> ::= = | <> | < | <= | >= | > | or | and
@@ -199,26 +195,24 @@ void parser_parse_relational_operator()
 }
 
 // <factor> ::= <variable> | <constant> | ( <expression> ) | not <factor> | <bool>
-// Modificado para retornar char*
 char *parser_parse_factor()
 {
     if (token_match(TOKEN_DELIMITER, "("))
     {
-        char *expr_result = parser_parse_expression(); // Retorna alocado
+        char *expr_result = parser_parse_expression();
         token_expect(TOKEN_DELIMITER, ")");
-        return expr_result; // Passa o ponteiro alocado
+        return expr_result; 
     }
 
     if (token_match(TOKEN_KEYWORD, "not"))
     {
-        char *factor_result = parser_parse_factor(); // Retorna alocado
-        char *temp_result = new_temp();              // Novo temporário (alocado)
+        char *factor_result = parser_parse_factor(); 
+        char *temp_result = new_temp();             
 
-        // Emite: t_result = not t_factor
         emit_operation(temp_result, factor_result, "not", NULL);
 
-        free(factor_result); // Libera o resultado interno
-        return temp_result;  // Retorna o novo temporário (alocado)
+        free(factor_result);
+        return temp_result; 
     }
 
     if (token_check(TOKEN_BOOLEAN, NULL))
@@ -227,9 +221,9 @@ char *parser_parse_factor()
         {
             identifier_type_expect(expected_id_type, "boolean", current_token->line, current_token->value);
         }
-        char *bool_val = strdup(current_token->value); // Aloca
+        char *bool_val = strdup(current_token->value); 
         token_advance();
-        return bool_val; // Retorna alocado
+        return bool_val; 
     }
 
     if (token_check(TOKEN_IDENTIFIER, NULL))
@@ -242,126 +236,116 @@ char *parser_parse_factor()
             strcpy(expected_id_type, type_read);
         }
 
-        // parser_parse_variable agora retorna char* alocado
         char *var_name = parser_parse_variable();
 
         identifier_type_expect(expected_id_type, type_read, line, last_identifier_found);
 
-        return var_name; // Retorna alocado
+        return var_name; 
     }
 
-    // Se for um número, parser_parse_constant é chamado
     if (token_check(TOKEN_NUMBER, NULL))
     {
-        return parser_parse_constant(); // Retorna alocado
+        return parser_parse_constant(); 
     }
 
     log_syntax_error(current_token);
     exit(EXIT_FAILURE);
-    return NULL; // Nunca alcançado
+    return NULL; 
 }
 
 // <term> ::= <factor> { <multiplying operator> <factor> }
-// Modificado para retornar char*
 char *parser_parse_term()
 {
-    char *left_result = parser_parse_factor(); // Retorna alocado
+    char *left_result = parser_parse_factor(); 
 
     while (token_check(TOKEN_OPERATOR_ARITHMETIC, "*") || token_check(TOKEN_OPERATOR_ARITHMETIC, "div"))
     {
-        char op[5]; // Buffer para "div"
-        strncpy(op, current_token->value, 4);
-        op[4] = '\0';
+        char operator_buffer[5];
+        strncpy(operator_buffer, current_token->value, 4);
+        operator_buffer[4] = '\0';
 
         parser_parse_multiplying_operator();
 
-        char *right_result = parser_parse_factor(); // Retorna alocado
-        char *temp_result = new_temp();             // Novo temporário (alocado)
+        char *right_result = parser_parse_factor(); 
+        char *temp_result = new_temp();             
 
-        // Emite: t_result = t_left * t_right
-        emit_operation(temp_result, left_result, op, right_result);
+        emit_operation(temp_result, left_result, operator_buffer, right_result);
 
-        free(left_result);  // Libera o resultado da esquerda anterior
-        free(right_result); // Libera o resultado da direita
+        free(left_result);  
+        free(right_result); 
 
-        left_result = temp_result; // O novo resultado se torna o da esquerda
+        left_result = temp_result; 
     }
 
-    return left_result; // Retorna o resultado final (alocado)
+    return left_result; 
 }
 
 // <simple expression> ::= <sign> <term> { <adding operator> <term> }
-// Modificado para retornar char*
 char *parser_parse_simple_expression()
 {
-    char *sign = parser_parse_sign();        // Retorna alocado ou NULL
-    char *left_result = parser_parse_term(); // Retorna alocado
+    char *sign = parser_parse_sign();       
+    char *left_result = parser_parse_term();
 
     if (sign)
     {
-        char *temp_result = new_temp(); // Novo temporário (alocado)
+        char *temp_result = new_temp(); 
 
-        // Emite: t_result = - t_left (operação unária)
         emit_operation(temp_result, left_result, sign, NULL);
 
-        free(left_result);         // Libera o resultado interno
-        free(sign);                // Libera o sinal
-        left_result = temp_result; // O novo resultado se torna o da esquerda
+        free(left_result);         
+        free(sign);               
+        left_result = temp_result;
     }
 
     while (token_check(TOKEN_OPERATOR_ARITHMETIC, "+") || token_check(TOKEN_OPERATOR_ARITHMETIC, "-"))
     {
-        char op[2];
-        strncpy(op, current_token->value, 1);
-        op[1] = '\0';
+        char operator_buffer[2];
+        strncpy(operator_buffer, current_token->value, 1);
+        operator_buffer[1] = '\0';
 
         parser_parse_adding_operator();
 
-        char *right_result = parser_parse_term(); // Retorna alocado
-        char *temp_result = new_temp();           // Novo temporário (alocado)
+        char *right_result = parser_parse_term(); 
+        char *temp_result = new_temp();           
 
-        // Emite: t_result = t_left + t_right
-        emit_operation(temp_result, left_result, op, right_result);
+        emit_operation(temp_result, left_result, operator_buffer, right_result);
 
-        free(left_result);  // Libera o resultado da esquerda anterior
-        free(right_result); // Libera o resultado da direita
+        free(left_result);  
+        free(right_result); 
 
-        left_result = temp_result; // O novo resultado se torna o da esquerda
+        left_result = temp_result; 
     }
 
-    return left_result; // Retorna o resultado final (alocado)
+    return left_result; 
 }
 
 // <expression> ::= <simple expression> | <simple expression> <relational operator> <simple expression>
-// Modificado para retornar char*
 char *parser_parse_expression()
 {
-    char *left_result = parser_parse_simple_expression(); // Retorna alocado
+    char *left_result = parser_parse_simple_expression();
 
-    // Verifica operadores relacionais (incluindo 'or' e 'and' pela gramática)
     if (token_check(TOKEN_OPERATOR_RELATIONAL, NULL) ||
         token_check(TOKEN_KEYWORD, "or") ||
         token_check(TOKEN_KEYWORD, "and"))
     {
-        char op[5]; // Para "<>" ou "and"
-        strncpy(op, current_token->value, 4);
-        op[4] = '\0';
+        char operator_buffer[5]; 
+        strncpy(operator_buffer, current_token->value, 4);
+        operator_buffer[4] = '\0';
 
         parser_parse_relational_operator();
 
-        char *right_result = parser_parse_simple_expression(); // Retorna alocado
-        char *temp_result = new_temp();                        // Novo temporário (alocado)
+        char *right_result = parser_parse_simple_expression(); 
+        char *temp_result = new_temp();                        
 
-        // Emite: t_result = t_left < t_right
-        emit_operation(temp_result, left_result, op, right_result);
+        emit_operation(temp_result, left_result, operator_buffer, right_result);
 
-        free(left_result);  // Libera o resultado da esquerda
-        free(right_result); // Libera o resultado da direita
+        free(left_result);  
+        free(right_result); 
 
-        return temp_result; // Retorna o novo temporário (alocado)
+        return temp_result; 
     }
 
-    return left_result; // Retorna o resultado (alocado) da expressão simples
+    return left_result; 
 }
 
 /* Comandos */
@@ -371,27 +355,26 @@ void parser_parse_while_statement()
 {
     token_expect(TOKEN_KEYWORD, "while");
 
-    char *label_start = new_label(); // Aloca L_start
-    char *label_end = new_label();   // Aloca L_end
+    char *label_start = new_label(); 
+    char *label_end = new_label();   
 
-    emit_label(label_start); // L_start:
+    emit_label(label_start); 
 
     is_assignment = false;
-    char *expr_result = parser_parse_expression(); // Aloca t_expr
+    char *expr_result = parser_parse_expression(); 
     is_assignment = true;
 
-    // Emite: if t_expr == false goto L_end
     emit_if_goto(expr_result, "==", "false", label_end);
-    free(expr_result); // Libera t_expr
+    free(expr_result); 
 
     token_expect(TOKEN_KEYWORD, "do");
     parser_parse_statement();
 
-    emit_goto(label_start); // goto L_start
-    emit_label(label_end);  // L_end:
+    emit_goto(label_start); 
+    emit_label(label_end);  
 
-    free(label_start); // Libera L_start
-    free(label_end);   // Libera L_end
+    free(label_start); 
+    free(label_end);   
 }
 
 // <if statement> ::= if <expression> then <statement> { else <statement> }
@@ -399,39 +382,37 @@ void parser_parse_if_statement()
 {
     token_expect(TOKEN_KEYWORD, "if");
     is_assignment = false;
-    char *expr_result = parser_parse_expression(); // Aloca t_expr
+    char *expr_result = parser_parse_expression();
     is_assignment = true;
 
     token_expect(TOKEN_KEYWORD, "then");
 
-    char *label_else = new_label(); // Aloca L_else
+    char *label_else = new_label(); 
 
-    // Emite: if t_expr == false goto L_else
     emit_if_goto(expr_result, "==", "false", label_else);
-    free(expr_result); // Libera t_expr
+    free(expr_result);
 
-    parser_parse_statement(); // Bloco 'then'
+    parser_parse_statement();
 
     if (token_match(TOKEN_KEYWORD, "else"))
     {
-        char *label_end = new_label(); // Aloca L_end
+        char *label_end = new_label();
 
-        emit_goto(label_end);   // goto L_end (pula o 'else')
-        emit_label(label_else); // L_else:
+        emit_goto(label_end);   
+        emit_label(label_else); 
 
-        parser_parse_statement(); // Bloco 'else'
+        parser_parse_statement(); 
 
-        emit_label(label_end); // L_end:
+        emit_label(label_end); 
 
-        free(label_end); // Libera L_end
+        free(label_end); 
     }
     else
     {
-        // Se não houver 'else', L_else é o fim do 'if'
-        emit_label(label_else); // L_else:
+        emit_label(label_else); 
     }
 
-    free(label_else); // Libera L_else
+    free(label_else);
     is_assignment = true;
 }
 
@@ -455,16 +436,16 @@ void parser_parse_read_write_statement()
 
     token_expect(TOKEN_DELIMITER, "(");
 
-    char *var_name = parser_parse_variable(); // Aloca
+    char *var_name = parser_parse_variable(); 
     if (is_write)
         emit_write(var_name);
     else
         emit_read(var_name);
-    free(var_name); // Libera
+    free(var_name); 
 
     while (token_match(TOKEN_DELIMITER, ","))
     {
-        var_name = parser_parse_variable(); // Aloca
+        var_name = parser_parse_variable();
         if (is_write)
             emit_write(var_name);
         else
@@ -478,7 +459,6 @@ void parser_parse_read_write_statement()
 // <parameters list> ::= ( <identifier> | <number> | <bool> ) {, ( <identifier> | <numero> | <bool> ) }
 void parser_parse_parameters_list()
 {
-    // AINDA NÃO IMPLEMENTADO PARA 3AC (Chamadas de procedimento/função)
     token_expect(TOKEN_DELIMITER, "(");
 
     bool result = token_match(TOKEN_IDENTIFIER, NULL) || token_match(TOKEN_NUMBER, NULL) || token_match(TOKEN_BOOLEAN, NULL);
@@ -513,7 +493,6 @@ void parser_parse_parameters_list()
 */
 void parser_parse_function_procedure_statement()
 {
-    // AINDA NÃO IMPLEMENTADO PARA 3AC
     if (token_match(TOKEN_IDENTIFIER, NULL))
     {
         if (token_match(TOKEN_OPERATOR_ASSIGNMENT, NULL))
@@ -565,12 +544,9 @@ void parser_parse_assignment_statement()
     token_advance(); // Consome o identificador
     token_expect(TOKEN_OPERATOR_ASSIGNMENT, NULL);
 
-    char *expr_result = parser_parse_expression(); // Aloca t_expr
-
-    // Emite: identificador = t_expr
+    char *expr_result = parser_parse_expression(); 
     emit_assignment(identifier, expr_result);
-
-    free(expr_result); // Libera t_expr
+    free(expr_result);
 }
 
 /*
@@ -779,7 +755,7 @@ void parser_parse_variable_declaration_part()
         parser_parse_variable_declaration();
         token_expect(TOKEN_DELIMITER, ";");
 
-        while (token_check(TOKEN_KEYWORD, "var")) // Modificado para aceitar 'var' repetido
+        while (token_check(TOKEN_KEYWORD, "var")) 
         {
             token_match(TOKEN_KEYWORD, "var");
             parser_parse_variable_declaration();
@@ -815,14 +791,12 @@ void parser_parse_program()
 void parser_init()
 {
     symbol_table_init();
-    init_code_gen("program"); // Inicializa o gerador de código
-    token_advance();          // Inicializa o primeiro token
+    token_advance();         
 }
 
 void parser_parse()
 {
     parser_parse_program();
-    finalize_code_gen(); // Finaliza a impressão do 3AC
     symbol_table_print();
 }
 
@@ -830,8 +804,8 @@ void parser_cleanup()
 {
     if (current_token)
     {
-        free(current_token->value); // Libera o valor do último token
-        free(current_token);        // Libera o último token
+        free(current_token->value); 
+        free(current_token);        
         current_token = NULL;
     }
     symbol_table_cleanup();

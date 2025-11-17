@@ -4,6 +4,7 @@
 #include "logging.h"
 #include "scanner.h"
 #include "parser.h"
+#include "intermediary_code_generator.h"
 
 /*
 Referências:
@@ -22,12 +23,14 @@ int main(int argc, char const *argv[])
 
     log_init(program_name);
     scanner_init(argv[1]);
+    init_code_gen(program_name);
     parser_init();
 
     parser_parse();
 
     parser_cleanup();
     scanner_cleanup();
+    finalize_code_gen();
     log_cleanup();
 
     return EXIT_SUCCESS;

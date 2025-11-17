@@ -225,11 +225,6 @@ Token *get_token()
         if (next_ch == '*')
         {
             // Processar comentário completo
-            char comment_buffer[MAX_COMMENT_LENGTH];
-            int comment_index = 0;
-
-            comment_buffer[comment_index++] = ch;
-            comment_buffer[comment_index++] = next_ch;
 
             bool comment_closed = false;
             while ((ch = fgetc(source_file)) != EOF)
@@ -239,20 +234,11 @@ Token *get_token()
                     current_line++;
                 }
 
-                if (comment_index < MAX_COMMENT_LENGTH - 1)
-                {
-                    comment_buffer[comment_index++] = ch;
-                }
-
                 if (ch == '*')
                 {
                     int potential_end = fgetc(source_file);
                     if (potential_end == '/')
                     {
-                        if (comment_index < MAX_COMMENT_LENGTH - 1)
-                        {
-                            comment_buffer[comment_index++] = potential_end;
-                        }
                         comment_closed = true;
                         break;
                     }
@@ -268,14 +254,6 @@ Token *get_token()
                 fprintf(stderr, "Lexical Error: Unterminated comment starting at line %d\n", current_line);
                 exit(EXIT_FAILURE);
             }
-
-            comment_buffer[comment_index] = '\0';
-
-            Token *token = create_token(TOKEN_COMMENT, comment_buffer, comment_buffer + comment_index, current_line);
-            log_token(token);
-
-            free(token->value);
-            free(token);
 
             return get_token(); // Pegar o próximo token após o comentário
         }
