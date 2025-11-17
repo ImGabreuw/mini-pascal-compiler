@@ -6,10 +6,12 @@
 #include "parser.h"
 #include "intermediary_code_generator.h"
 
-/*
-Referências:
-- https://medium.com/@garylin132/lexer-the-first-step-of-building-a-compiler-d5e70a84b49f
-*/
+/**
+ *Integrantes:
+ *Enzo B. Proença - 10418579 - 06D
+ *Gabriel Ken Kazama Geronazzo - 10418247 - 06D
+ *Lucas Pires de Camargo Sarai - 10418013 - 06D
+ */
 
 int main(int argc, char const *argv[])
 {
